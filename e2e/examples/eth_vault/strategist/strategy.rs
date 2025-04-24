@@ -147,6 +147,11 @@ impl ValenceWorker for Strategy {
             .unwrap_or_default();
         info!("updated pending obligations: {pending_obligations}");
 
+        /*
+            TODO: Pending obligations to be handled differently based on medium and large-scale withdrawals as mentioned in Section 8 of Yield architecture docs (cr. Ayush)
+            - Below step no. 4, 5, 6 will be replaced.
+        */
+
         // 4. lp shares to be liquidated will yield untrn+uusdc. to figure out
         // the amount of ntrn needed to get 1/2 of the obligations, we half the
         // usdc amount

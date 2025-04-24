@@ -341,11 +341,11 @@ contract ValenceVault is
      */
     function deposit(uint256 assets, address receiver) public override whenNotPaused returns (uint256) {
         uint256 maxAssets = maxDeposit(receiver);
-        if (assets > maxAssets) {
-            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
+        if (assets > maxAssets) { // NOTE: revisit this
+            revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets); 
         }
 
-        uint128 depositFee = calculateDepositFee(assets);
+        uint128 depositFee = calculateDepositFee(assets); // NOTE: do we need this? Need to decide fee structure as a whole
         uint256 assetsAfterFee;
         unchecked {
             assetsAfterFee = assets - depositFee;
@@ -357,6 +357,8 @@ contract ValenceVault is
 
         uint256 shares = previewDeposit(assetsAfterFee);
         _deposit(_msgSender(), receiver, assets, shares);
+
+        // NOTE: save user deposited amount for yield stripping from frontend
 
         return shares;
     }
@@ -633,6 +635,32 @@ contract ValenceVault is
         }
 
         _withdraw(previewWithdraw(assets), assets, receiver, owner, maxLossBps, allowSolverCompletion);
+        
+        /* NOTE: maxLossBPS is not required, but this means we need some form of insurance funds.
+           - With insurance funds and centralised insurance policies, if we still aren't able to cover losses we will have to document the loss on vault
+            - In this case, maxLossBps is required to get user consent
+            - We want all users to bear same loss, so we can't have emergency withdrawals where user can withdraw without waiting for redemption rate updation.
+             - But we want quickWithdrawals to improve user experience
+             - We can cap a said percentage of vault funds that will be available for quick withdrawals
+             - In case of a protocol hack, we will need a flag to disable quick withdrawals i.e. pausedQuickWithdrawal
+
+           NOTE: previewWithdraw is using previous price (hence the actual number of assets will be (ideally) more than the requested)
+            - but user will be able to redeposit the extra assets in the same block
+            - but user won't be able to withdraw all of his/her shares from this function (justifies the need for redeem function) 
+        */ 
+    }
+
+    function handleQuickWithdraw() private {
+        /*
+            1. Move funds from depositAccount to the withdrawAccount
+            2. invoke quickWithdraw on withdraw account
+            3. Withdraw account will invoke position manager to pull the required liquidity after 
+                a. only if withdraw amount exceeds the amount in depositAccount, 
+                b. if this is medium scale withdrawal (3-5% TVL) than pull liquidity only from cosmos
+                c. if this is large scale withdrawal (5-10% TVL) than pull liquidity from all strategies equally. (this is and below will enter queues)
+                d. if it is extra-large than we can divide into tranches (future work)
+            4. complete withdrawal will be called by solvers in case withdraw is queued (is large-scale)
+        */
     }
 
     /**
@@ -870,6 +898,15 @@ contract ValenceVault is
         _mint(receiver, shares);
 
         emit Deposit(caller, receiver, assets, shares);
+
+        /*
+            NOTE: Minting shares instantly on deposit is prone to unfair reward stealing by malicious user. Draft a question with example and send it to valence team
+                - But if updating redemption rate is cheap, we can update the rate on every deposit before minting aUSDC shares which solves the problem.
+
+            - Since deposited funds are not deployed instantly, on redemption rate update, the user is unfairly rewarded from the reward earned by protocol by funds from previous users
+                - Withdraw cooling period is also not helpful here becuase the strategist is keeping the withdraw request total in withdraw account
+                - one solution is to introduce a minimum lockup time (one update cycle) so that user cannot earn risk-free rewards
+        */
     }
 
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
