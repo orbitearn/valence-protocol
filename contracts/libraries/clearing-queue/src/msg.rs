@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{ensure, Addr, Deps, DepsMut, Uint128, Uint64};
+use cosmwasm_std::{Addr, Coin, Deps, DepsMut, Uint64};
 use cw_ownable::cw_ownable_query;
 use valence_library_utils::{
     error::LibraryError, msg::LibraryConfigValidation, LibraryAccountType,
@@ -14,10 +14,6 @@ pub struct Config {
     /// settlement input account which we tap into in order
     /// to settle the obligations
     pub settlement_acc_addr: Addr,
-    /// obligation base denom
-    pub denom: String,
-    /// latest registered obligation id
-    pub latest_id: Uint64,
 }
 
 #[cw_serde]
@@ -26,11 +22,6 @@ pub struct LibraryConfig {
     /// settlement input account which we tap into in order
     /// to settle the obligations
     pub settlement_acc_addr: LibraryAccountType,
-    /// obligation base denom
-    pub denom: String,
-    /// latest registered obligation id.
-    /// if `None`, defaults to 0
-    pub latest_id: Option<Uint64>,
 }
 
 #[cw_serde]
@@ -39,8 +30,8 @@ pub enum FunctionMsgs {
     RegisterObligation {
         /// where the payout is to be routed
         recipient: String,
-        /// amount of the config denom owed to the recipient
-        payout_amount: Uint128,
+        /// what is owed to the recipient
+        payout_coins: Vec<Coin>,
         /// some unique identifier for the request
         id: Uint64,
     },
@@ -49,34 +40,17 @@ pub enum FunctionMsgs {
 }
 
 impl LibraryConfig {
-    pub fn new(
-        settlement_acc_addr: impl Into<LibraryAccountType>,
-        denom: String,
-        latest_id: Option<Uint64>,
-    ) -> Self {
+    pub fn new(settlement_acc_addr: impl Into<LibraryAccountType>) -> Self {
         LibraryConfig {
             settlement_acc_addr: settlement_acc_addr.into(),
-            denom,
-            latest_id,
         }
     }
 
-    fn do_validate(
-        &self,
-        api: &dyn cosmwasm_std::Api,
-    ) -> Result<(Addr, String, Uint64), LibraryError> {
+    fn do_validate(&self, api: &dyn cosmwasm_std::Api) -> Result<Addr, LibraryError> {
         // validate the input account
         let settlement_acc_addr = self.settlement_acc_addr.to_addr(api)?;
 
-        ensure!(
-            !self.denom.is_empty(),
-            LibraryError::ConfigurationError("input denom cannot be empty".to_string())
-        );
-
-        // if id was not specified, we default to 0
-        let id = self.latest_id.unwrap_or_default();
-
-        Ok((settlement_acc_addr, self.denom.to_string(), id))
+        Ok(settlement_acc_addr)
     }
 }
 
@@ -88,11 +62,9 @@ impl LibraryConfigValidation<Config> for LibraryConfig {
     }
 
     fn validate(&self, deps: Deps) -> Result<Config, LibraryError> {
-        let (settlement_acc_addr, denom, latest_id) = self.do_validate(deps.api)?;
+        let settlement_acc_addr = self.do_validate(deps.api)?;
         Ok(Config {
             settlement_acc_addr,
-            denom,
-            latest_id,
         })
     }
 }
@@ -103,14 +75,6 @@ impl LibraryConfigUpdate {
 
         if let Some(settlement_acc_addr) = self.settlement_acc_addr {
             config.settlement_acc_addr = settlement_acc_addr.to_addr(deps.api)?;
-        }
-
-        if let Some(denom) = self.denom {
-            ensure!(
-                !denom.is_empty(),
-                LibraryError::ConfigurationError("clearing denom cannot be empty".to_string())
-            );
-            config.denom = denom;
         }
 
         valence_library_base::save_config(deps.storage, &config)?;
@@ -139,7 +103,7 @@ pub enum QueryMsg {
     /// if status of more than one obligations will be relevant,
     /// this information can be inferred from the `Obligations` query
     /// (if obligation is in the queue then it is not yet settled).
-    #[returns(crate::state::ObligationStatus)]
+    #[returns(ObligationStatusResponse)]
     ObligationStatus { id: u64 },
 }
 
@@ -147,6 +111,14 @@ pub enum QueryMsg {
 pub struct QueueInfoResponse {
     /// total number of obligations in the queue
     pub len: u64,
+}
+
+#[cw_serde]
+pub struct ObligationStatusResponse {
+    /// boolean status of a given obligation where
+    /// `false` indicates that the obligation is registered,
+    /// and `true` indicates that the obligation is settled.
+    pub settled: bool,
 }
 
 #[cw_serde]

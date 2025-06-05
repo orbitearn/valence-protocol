@@ -1,20 +1,17 @@
-use cosmwasm_std::{Addr, Coin, Empty, Uint128};
+use cosmwasm_std::{Addr, Coin, Empty};
 use cw_multi_test::{error::AnyResult, App, AppResponse, Executor};
 use valence_library_utils::{
     msg::ExecuteMsg,
     testing::{LibraryTestSuite, LibraryTestSuiteBase},
-    OptionUpdate,
 };
 
-use crate::{
-    msg::{
-        FunctionMsgs, LibraryConfig, LibraryConfigUpdate, ObligationsResponse, QueryMsg,
-        QueueInfoResponse,
-    },
-    state::ObligationStatus,
+use crate::msg::{
+    FunctionMsgs, LibraryConfig, LibraryConfigUpdate, ObligationStatusResponse,
+    ObligationsResponse, QueryMsg, QueueInfoResponse,
 };
 
 pub(crate) const DENOM_1: &str = "DENOM_1";
+pub(crate) const DENOM_2: &str = "DENOM_2";
 
 pub struct ClearingQueueTestingSuite {
     pub inner: LibraryTestSuiteBase,
@@ -30,7 +27,7 @@ impl ClearingQueueTestingSuite {
     pub fn register_new_obligation(
         &mut self,
         recipient: String,
-        payout_amount: Uint128,
+        payout_coins: Vec<Coin>,
         id: u64,
     ) -> AnyResult<AppResponse> {
         let processor = self.processor.clone();
@@ -42,7 +39,7 @@ impl ClearingQueueTestingSuite {
             &ExecuteMsg::<FunctionMsgs, LibraryConfigUpdate>::ProcessFunction(
                 FunctionMsgs::RegisterObligation {
                     recipient,
-                    payout_amount,
+                    payout_coins,
                     id: id.into(),
                 },
             ),
@@ -70,10 +67,7 @@ impl ClearingQueueTestingSuite {
 
         let updated_config = LibraryConfigUpdate {
             settlement_acc_addr: Some(new_config.settlement_acc_addr),
-            denom: Some(new_config.denom),
-            latest_id: OptionUpdate::Set(new_config.latest_id),
         };
-
         self.app_mut().execute_contract(
             owner,
             clearing_lib,
@@ -99,7 +93,7 @@ impl ClearingQueueTestingSuite {
             .query_wasm(&self.clearing_queue, &QueryMsg::QueueInfo {})
     }
 
-    pub fn query_obligation_status(&self, obligation_id: u64) -> ObligationStatus {
+    pub fn query_obligation_status(&self, obligation_id: u64) -> ObligationStatusResponse {
         self.inner.query_wasm(
             &self.clearing_queue,
             &QueryMsg::ObligationStatus { id: obligation_id },
