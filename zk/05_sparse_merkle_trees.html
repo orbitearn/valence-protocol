@@ -1,0 +1,328 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Sparse Merkle Trees - Valence Protocol Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Valence Protocol Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/timewave-computer/valence-protocol" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="sparse-merkle-trees-in-valence"><a class="header" href="#sparse-merkle-trees-in-valence">Sparse Merkle Trees in Valence</a></h1>
+<p>A sparse Merkle tree (SMT) is a specialized Merkle tree with leaf indices defined by an injective function from predefined arguments. The verification key of a ZK circuit, being injective to the circuit's definition, serves as an index for available programs.</p>
+<p>Since ZK proofs are uniquely tied to their verification keys, we can use these keys to index and organize proofs from different programs. This makes each verification key a unique identifier for its corresponding proof within the collection.</p>
+<h2 id="merkle-tree"><a class="header" href="#merkle-tree">Merkle Tree</a></h2>
+<p>A Merkle tree is an authenticated data structure consisting of leaves and nodes that form a tree shape. Each node in this tree represents the cryptographic hash of its children, while the leaves hold an arbitrary piece of data—usually the hash value of some variable input.</p>
+<p>For a hash function <code>H</code>, if we insert data items A, B, C into a Merkle tree, the resulting structure would look like:</p>
+<pre class="mermaid">graph TB
+    %% Root node
+    r[&quot;R := H(t10, t11)&quot;]
+    
+    %% Level 1
+    m1[&quot;t10 := H(t00, t01)&quot;] --&gt; r
+    m2[&quot;t11 := H(t02, t03)&quot;] --&gt; r
+    
+    %% Level 2
+    c1[&quot;t00 := H(A)&quot;] --&gt; m1
+    c2[&quot;t01 := H(B)&quot;] --&gt; m1
+    c3[&quot;t02 := H(C)&quot;] --&gt; m2
+    c4[&quot;t03 := 0&quot;] --&gt; m2
+</pre>
+<p><em>Figure 1: Basic Merkle tree structure. The node labeling uses a coordinate system where the first digit represents the tree level (0 = leaves, 1 = intermediate nodes, etc.) and the second digit represents the position at that level. Each parent node is computed as the hash of its two children in this binary tree structure.</em></p>
+<h3 id="membership-proof"><a class="header" href="#membership-proof">Membership Proof</a></h3>
+<p>A Merkle tree serves as an efficient data structure for validating the membership of a leaf node within a set in logarithmic time, making it especially useful for handling large sets and well-suited for random insertion patterns. A Merkle opening (or Merkle proof) represents an array of sibling nodes that outline a Merkle Path leading to a commitment Root. If the verifier possesses the root and employs a cryptographic hash function, the pre-image of the hash is non-malleable; in a cryptographic hash, it's unfeasible to discover a set of siblings resulting in the root, except for the valid inputs. Given that the leaf node is known to the verifier, a Merkle Proof will consist of a sequence of hashes leading up to the root. This allows the verifier to compute the root value and compare it with the known Merkle root, thereby confirming the membership of any provided alleged member without relying on the trustworthiness of the source. Consequently, a single hash commitment ensures that any verifier can securely validate the membership of any proposed member supplied by an untrusted party.</p>
+<p>To prove that <code>C</code> is in the tree, the Merkle proof includes the sibling nodes along the path from <code>C</code> to the root: <code>[t03, t10]</code>. So the verifier, that knows <code>R</code> beforehand, will compute:</p>
+<ol>
+<li><code>t02 := H(C)</code></li>
+<li><code>t11 := H(t02, t03)</code></li>
+<li><code>R' := H(t10, t11)</code></li>
+</ol>
+<p>If <code>R == R'</code>, then <code>C</code> is a member of the set.</p>
+<p>Note that the depth of the tree is the length of its Merkle opening, that is: we open up to a node with depth equal to the length of the proof.</p>
+<h2 id="sparse-data"><a class="header" href="#sparse-data">Sparse Data</a></h2>
+<p>Let's consider a public function <code>f</code> that accepts a member and returns a tuple. This tuple consists of the index within the tree as a <code>u64</code> value, and the hash of the leaf: <code>(i, h) = f(X)</code>.</p>
+<p>For the example above, let's assume two members:</p>
+<ul>
+<li><code>(3, a) := f(A)</code></li>
+<li><code>(1, b) := f(B)</code></li>
+</ul>
+<pre class="mermaid">graph TB
+    %% Root node
+    r[&quot;R := H(t10, t11)&quot;]
+    
+    %% Level 1
+    m1[&quot;t10 := H(t00, t01)&quot;] --&gt; r
+    m2[&quot;t11 := H(t02, t03)&quot;] --&gt; r
+    
+    %% Level 2
+    c1[&quot;t00 := 0&quot;] --&gt; m1
+    c2[&quot;t01 := b&quot;] --&gt; m1
+    c3[&quot;t02 := 0&quot;] --&gt; m2
+    c4[&quot;t03 := a&quot;] --&gt; m2
+</pre>
+<p>The primary distinction of a sparse Merkle tree lies in the deterministic leaf index, making it agnostic to input order. In essence, this structure forms an unordered set whose equivalence remains consistent irrespective of the sequence in which items are appended.</p>
+<p>In addition to membership proofs sparse Merkle trees also support generating proofs of non-membership. To achieve this, we carry out a Merkle opening at the specified target index, and expect the returned value to be <code>0</code>.</p>
+<p>Let's assume a non-member <code>X</code> to be <code>(0, x) := f(X)</code>. To verify that <code>X</code> is not in the tree, given the root <code>R</code> and the non-membership proof <code>[b, t11]</code>, the verifier:</p>
+<ol>
+<li>Computes <code>(0, x) := f(X)</code> to find where <code>X</code> should be located (index 0)</li>
+<li>Reconstructs <code>t10 := H(0, b)</code> using the empty slot (0) and sibling <code>b</code></li>
+<li>Computes the root <code>R' := H(t10, t11)</code> and checks if <code>R' == R</code></li>
+</ol>
+<p>If <code>R == R'</code>, then <code>0</code> is at the slot of <code>X</code>. Since we know <code>X</code> to not be the pre-image of <code>0</code> in <code>H</code>, then <code>X</code> is not a member of the tree.</p>
+<h2 id="the-valence-smt"><a class="header" href="#the-valence-smt">The Valence SMT</a></h2>
+<p>Valence's sparse Merkle tree is designed to utilize the hash of the verifying key generated by the ZK circuit as its index. The tree's leaf data will encompass the proof and input arguments for the ZK program. For this particular implementation, we can consider the input arguments as a generic type, which will be specifically defined during development. These input arguments will constitute the key-value pairs that define a subset of the contract state essential for state transition. The proof will be a vector of bytes.</p>
+<p>The tree depth is adaptive, representing the smallest value required to traverse from a leaf node to the root, given the number of elements involved. This approach avoids writing nodes that contain unused entries. So if a tree contains two adjacent nodes indexed at <code>[(0,0), (0,1)]</code>, the Merkle opening will contain a single element: the sibling leaf of the validated node.</p>
+<p>If the tree comprises two nodes with indices <code>[(0,0), (0,2)]</code>, the Merkle opening will have two elements, allowing for a complete traversal from the leaves to the root.</p>
+<h3 id="precomputed-empty-subtrees"><a class="header" href="#precomputed-empty-subtrees">Precomputed Empty Subtrees</a></h3>
+<p>The Valence SMT implementation includes a precomputed set of empty subtrees based on the selected hash primitive. For example, when a tree contains only empty nodes, all hash values are constant:</p>
+<pre class="mermaid">graph TB
+    %% Root node
+    r[&quot;R := H(t10, t11)&quot;]
+    
+    %% Level 1
+    m1[&quot;t10 := H(t00, t01)&quot;] --&gt; r
+    m2[&quot;t11 := H(t02, t03)&quot;] --&gt; r
+    
+    %% Level 2
+    c1[&quot;t00 := 0&quot;] --&gt; m1
+    c2[&quot;t01 := 0&quot;] --&gt; m1
+    c3[&quot;t02 := 0&quot;] --&gt; m2
+    c4[&quot;t03 := 0&quot;] --&gt; m2
+</pre>
+<p>In practice, sparse Merkle trees often have many empty positions, especially when the index space is large but only a few positions are occupied. This creates opportunities for optimization through precomputation.</p>
+<p>Consider a more realistic scenario where we have a sparse tree with a single leaf <code>X</code> at index 2:</p>
+<pre class="mermaid">graph TB
+    %% Root
+    r[&quot;R := H(t20, K2)&quot;]
+    
+    %% Level 1
+    t20[&quot;t20 := H(K1, t11)&quot;] --&gt; r
+    t21[&quot;K2&quot;] --&gt; r
+    
+    %% Level 2
+    m1[&quot;K1&quot;] --&gt; t20
+    m2[&quot;t11 := H(X, K0)&quot;] --&gt; t20
+    
+    %% Level 3
+    c3[&quot;X&quot;] --&gt; m2
+    c4[&quot;K0&quot;] --&gt; m2
+</pre>
+<p>Rather than computing <code>(K0, K1, K2)</code> each time, these values can be precomputed since they represent known constants: <code>K0 := H(0)</code>, <code>K1 := H(K0, K0)</code>, <code>K2 := H(K1, K1)</code>.</p>
+<p>By using SMTs, Valence can efficiently manage and verify large collections of authenticated data, including ZK proofs from coprocessor applications and commitments to program states.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../zk/04_coprocessor_internals.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../zk/06_guest_environment.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../zk/04_coprocessor_internals.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../zk/06_guest_environment.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>

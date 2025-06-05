@@ -1,0 +1,381 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Neutron IBC Transfer - Valence Protocol Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Valence Protocol Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/timewave-computer/valence-protocol" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="valence-neutron-ibc-transfer-library"><a class="header" href="#valence-neutron-ibc-transfer-library">Valence Neutron IBC Transfer library</a></h1>
+<p>The <strong>Valence Neutron IBC Transfer</strong> library allows to transfer funds over IBC from an <strong>input account</strong> on <strong>Neutron</strong> to an <strong>output account</strong> on a destination chain. It is typically used as part of a <strong>Valence Program</strong>. In that context, a <strong>Processor</strong> contract will be the main contract interacting with the Forwarder library.</p>
+<p>Note: this library should not be used on another chain other than <strong>Neutron</strong>, which requires some NTRN fees to be paid to relayers for IBC transfers that the <strong>input account</strong> should hold. For other CosmWasm chains, use the <strong><a href="./generic_ibc_transfer.html">Generic IBC Transfer library</a></strong> instead.</p>
+<h2 id="high-level-flow"><a class="header" href="#high-level-flow">High-level flow</a></h2>
+<pre class="mermaid">---
+title: Neutron IBC Transfer Library
+---
+graph LR
+  IA((Input
+      Account))
+  OA((Output
+		  Account))
+  P[Processor]
+  S[Neutron IBC Transfer
+    Library]
+  subgraph Neutron
+  P -- 1/IbcTransfer --&gt; S
+  S -- 2/Query balances --&gt; IA
+  S -- 3/Do Send funds --&gt; IA
+  end
+  subgraph Chain 2
+  IA -- 4/IBC Transfer --&gt; OA
+  end
+</pre>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Parameters</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>IbcTransfer</strong></td><td>-</td><td>Transfer funds over IBC from an <strong>input account</strong> on <strong>Neutron</strong> to an <strong>output account</strong> on a destination chain. The <strong>input account</strong> must hold enough NTRN balance to pay for the relayer fees</td></tr>
+<tr><td><strong>EurekaTransfer</strong></td><td>eureka_fee</td><td>Transfer funds over IBC from an <strong>input account</strong> on a source chain to an <strong>output account</strong> on a destination EVM chain using IBC Eureka. The eureka_fee parameter will contain the amount to be paid to a relayer address on the intermediate chain along with the timeout of this fee. All this information can be obtained from a Skip Go query explained in the IBC Eureka section below. <strong>Important</strong>: the fee timeout is passed in nanoseconds</td></tr>
+</tbody></table>
+</div>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>The library is configured on instantiation via the <code>LibraryConfig</code> type.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct LibraryConfig {
+  // Account from which the funds are pulled (on the source chain)
+  input_addr: LibraryAccountType,
+  // Account to which the funds are sent (on the destination chain)
+  output_addr: LibraryAccountType,
+  // Denom of the token to transfer
+  denom: UncheckedDenom,
+  // Amount to be transferred, either a fixed amount or the whole available balance.
+  amount: IbcTransferAmount,
+  // Memo to be passed in the IBC transfer message.
+  memo: String,
+  // Information about the destination chain.
+  remote_chain_info: RemoteChainInfo,
+  // Denom map for the Packet-Forwarding Middleware, to perform a multi-hop transfer.
+  denom_to_pfm_map: BTreeMap&lt;String, PacketForwardMiddlewareConfig&gt;,
+  // Configuration used for IBC Eureka transfers
+  eureka_config: Option&lt;EurekaConfig&gt;,
+}
+
+// Defines the amount to be transferred, either a fixed amount or the whole available balance.
+enum IbcTransferAmount {
+  // Transfer the full available balance of the input account.
+  FullAmount,
+  // Transfer the specified amount of tokens.
+  FixedAmount(Uint128),
+}
+
+pub struct RemoteChainInfo {
+  // Channel of the IBC connection to be used.
+  channel_id: String,
+  // Port of  the IBC connection to be used.
+  port_id: Option&lt;String&gt;,
+  // Timeout for the IBC transfer.
+  ibc_transfer_timeout: Option&lt;Uint64&gt;,
+}
+
+// Configuration for a multi-hop transfer using the Packet Forwarding Middleware
+struct PacketForwardMiddlewareConfig {
+  // Channel ID from the source chain to the intermediate chain
+  local_to_hop_chain_channel_id: String,
+  // Channel ID from the intermediate to the destination chain
+  hop_to_destination_chain_channel_id: String,
+  // Temporary receiver address on the intermediate chain. Typically this is set to an invalid address so the entire transaction will revert if the forwarding fails. If not
+  // provided it's set to "pfm"
+  hop_chain_receiver_address: Option&lt;String&gt;,
+}
+
+// Configuration for IBC Eureka transfers
+pub struct EurekaConfig {
+    /// The address of the contract on intermediate chain that will receive the callback.
+    pub callback_contract: String,
+    /// The address of the contract on intermediate chain that will trigger the actions, in this case the Eureka transfer.
+    pub action_contract: String,
+    /// Recover address on intermediate chain in case the transfer fails
+    pub recover_address: String,
+    /// Source channel on the intermediate chain (e.g. "08-wasm-1369")
+    pub source_channel: String,
+    /// Optional memo for the Eureka transfer triggered by the contract. Not used right now but could eventually be used.
+    pub memo: Option&lt;String&gt;,
+    /// Timeout in seconds to be used for the Eureka transfer. For reference, Skip Go uses 12 hours (43200). If not passed we will use that default value
+    pub timeout: Option&lt;u64&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="packet-forward-middleware"><a class="header" href="#packet-forward-middleware">Packet-Forward Middleware</a></h3>
+<p>The library supports multi-hop IBC transfers using the Packet Forward Middleware (PFM).
+This allows tokens to be transferred through an intermediate chain to reach their final
+destination. More information about the PFM functionality can be found in the <a href="https://github.com/cosmos/ibc-apps/tree/main/middleware/packet-forward-middleware">official
+documentation</a>.</p>
+<p>Neutron IBC Transfer library can be configured to make use of PFM as follows:</p>
+<ul>
+<li>
+<p><code>output_addr</code> is set to the final receiver address on the final destination chain</p>
+</li>
+<li>
+<p><code>remote_chain_info</code> is configured between the origin and intermediate chain</p>
+</li>
+<li>
+<p><code>denom_to_pfm_map</code> is configured to map the origin denom to its respective
+<code>PacketForwardMiddlewareConfig</code> which should contain:</p>
+<ul>
+<li><code>local_to_hop_chain_channel_id</code> - origin to intermediate chain channel id</li>
+<li><code>hop_to_destination_chain_channel_id</code> - intermediate to destination chain channel id</li>
+<li><code>hop_chain_receiver_address</code> - address where funds should settle on the intermediate
+chain in case of a failure</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>Official packet-forward-middleware recommends to configure intermediate chain settlement
+addresses (<code>hop_chain_receiver_address</code>) with an invalid bech32 string such as <code>"pfm"</code>.
+More information about this can be found in the <a href="https://github.com/cosmos/ibc-apps/tree/main/middleware/packet-forward-middleware#full-example---chain-forward-a-b-c-d-with-retry-on-timeout">official documentation</a>.</p>
+</blockquote>
+<p>Consider an example configuration transferring tokens from Neutron to Gaia via Juno.
+Library config may look like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let cfg = LibraryConfig {
+    input_addr: input_acc,
+    output_addr: output_acc,
+    denom: UncheckedDenom::Native(target_denom),
+    amount: IbcTransferAmount::FixedAmount(transfer_amount),
+    memo: "".to_string(),
+    remote_chain_info: RemoteChainInfo {
+        channel_id: neutron_to_juno_channel_id,
+        ibc_transfer_timeout: Some(500u64.into()),
+    },
+    denom_to_pfm_map: BTreeMap::from([(
+        denom,
+        PacketForwardMiddlewareConfig {
+            local_to_hop_chain_channel_id: neutron_to_juno_channel_id,
+            hop_to_destination_chain_channel_id: juno_to_gaia_channel_id,
+            hop_chain_receiver_address: None, // if not passed, "pfm" is used
+        },
+    )]),
+    eureka_config: None,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="ibc-eureka"><a class="header" href="#ibc-eureka">IBC Eureka</a></h3>
+<p>This library supports IBC Eureka transfers using an intermediate chain. This allows tokens to be transferred from the origin chain to EVM chains connected with IBC Eureka using standard IBC transfers together with Skip Go capabilities. For more information on how IBC Eureka works with Skip Go, please refer to this <a href="https://docs.skip.build/go/eureka/eureka-overview">Eureka overview</a>.</p>
+<p>This works in the same way as the <strong>Generic IBC Transfer Library</strong>. For more details on how IBC Eureka works, check the <a href="./generic_ibc_transfer.html#ibc-eureka">Generic IBC Transfer Library IBC Eureka</a> documentation.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../libraries/cosmwasm/generic_ibc_transfer.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../libraries/cosmwasm/osmosis_cl_lper.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../libraries/cosmwasm/generic_ibc_transfer.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../libraries/cosmwasm/osmosis_cl_lper.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>

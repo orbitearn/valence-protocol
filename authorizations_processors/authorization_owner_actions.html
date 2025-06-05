@@ -1,0 +1,340 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Owner Actions - Valence Protocol Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Valence Protocol Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/timewave-computer/valence-protocol" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="owner-functions"><a class="header" href="#owner-functions">Owner Functions</a></h1>
+<ul>
+<li>
+<p><code>create_authorizations(vec[Authorization])</code>: provides an authorization list which is the core information of the Authorization contract, it will include all the possible set of functions that can be executed. It will contain the following information:</p>
+<ul>
+<li>
+<p>Label: unique name of the authorization. This label will be used to identify the authorization and will be used as subdenom of the tokenfactory token in case it is permissioned. Due to tokenfactory module restrictions, the max length of this field is 44 characters.
+Example: If the label is <code>withdraw</code> and only address <code>neutron123</code> is allowed to execute this authorization, we will create the token <code>factory/&lt;contract_addr&gt;/withdraw</code> and mint one to that address. If <code>withdraw</code> was permissionless, there is no need for any token, so it's not created.</p>
+</li>
+<li>
+<p>Mode: can either be <code>Permissioned</code> or <code>Permissionless</code>. If <code>Permissionless</code> is chosen, any address can execute this function list. In case of <code>Permissioned</code>, we will also say what type of permissioned type we want (with <code>CallLimit</code> or without), a list of addresses will be provided for both cases. In case there is a <code>CallLimit</code> we will mint a certain amount of tokens for each address that is passed, in case there isn’t we will only mint one token and that token will be used all the time.</p>
+</li>
+<li>
+<p>NotBefore: from what time the authorization can be executed. We can specify a block height or a timestamp.</p>
+</li>
+<li>
+<p>Expiration: until when (what block or timestamp) this authorization is valid.</p>
+</li>
+<li>
+<p>MaxConcurrentExecutions (default 1): to avoid DDoS attacks and to clog the execution queues, we will allow certain authorizations subroutines to be present a maximum amount of times (default 1 unless overwritten) in the execution queue.</p>
+</li>
+<li>
+<p>Subroutine: set of functions in a specific order to be executed. Subroutines can be of two types: <code>Atomic</code> or <code>NonAtomic</code>. For the <code>Atomic</code> subroutines, we will provide an array of <code>Atomic</code> functions, an optional <code>expiration_time</code> and an optional <code>RetryLogic</code> for the entire subroutine. For the <code>NonAtomic</code> subroutines we will just provide an array of <code>NonAtomic</code> functions and an optional <code>expiration_time</code>. The <code>expiration_time</code> defines how long messages that are executing a subroutine will be valid for once they are sent from the authorization contract. This is particularly useful for domains that use relayers without timeouts (e.g. Hyperlane). If the <code>expiration_time</code> is not provided, the relayer can go down for an indefinite amount of time and the messages will still be valid and execute when it's back up. If the <code>expiration_time</code> is provided, the messages will be valid for that amount of time, by adding the current block timestamp to the <code>expiration_time</code>, and if the relayer is down for longer than that, the messages will be considered expired once the execution is attempted in the Processor contract, returning an <code>Expired</code> result.</p>
+<ul>
+<li>
+<p><code>AtomicFunction</code>: each Atomic function has the following parameters:</p>
+<ul>
+<li>
+<p>Domain of execution (must be the same for all functions in v1).</p>
+</li>
+<li>
+<p>MessageDetails: type (e.g. CosmwasmExecuteMsg, EvmCall ...) and message information. Depending on the type of the message that is being sent, we might need to provide additional values and/or only some specific <code>ParamRestrictions</code> can be applied:</p>
+<ul>
+<li>If we are sending messages that are not for a <code>CosmWasm ExecutionEnvironment</code> and the message passed doesn't contain Raw bytes for that particular VM (e.g. <code>EvmRawCall</code>), we need to provide the <code>Encoder</code> information for that message along with the name of the library that the <code>Encoder</code> will use to encode that message. For example, if we are sending a message for an <code>EvmCall</code> on an EVM domain, we need to provide the address of the <code>Encoder Broker</code> and the <code>version</code> of the <code>Encoder</code> that the broker needs to route the message to along with the name of the library that the <code>Encoder</code> will use to encode that message (e.g. <code>forwarder</code>).</li>
+<li>For all messages that are not raw bytes (<code>json</code> formatted), we can apply any of the following <code>ParamRestrictions</code>:
+<ul>
+<li><code>MustBeIncluded</code>: the parameter must be included in the message.</li>
+<li><code>CannotBeIncluded</code>: the parameter cannot be included in the message.</li>
+<li><code>MustBeValue</code>: the parameter must have a specific value.</li>
+</ul>
+</li>
+<li>For all messages that are raw bytes, we can only apply the <code>MustBeBytes</code> restriction, which matches that the bytes sent are the same as the ones provided in restriction, limiting the authorization execution to only one specific message.</li>
+</ul>
+</li>
+<li>
+<p>Contract address that will execute it.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>NonAtomicFunction</code>: each NonAtomic function has the following parameters:</p>
+<ul>
+<li>
+<p>Domain of execution</p>
+</li>
+<li>
+<p>MessageDetails (same as above).</p>
+</li>
+<li>
+<p>Contract address that will execute it.</p>
+</li>
+<li>
+<p>RetryLogic (optional, self-explanatory).</p>
+</li>
+<li>
+<p>CallbackConfirmation (optional): This defines if a <code>NonAtomicFunction</code> is completed after receiving a callback (Binary) from a specific address instead of after a correct execution. This is used in case of the correct message execution not being enough to consider the message completed, so it will define what callback we should receive from a specific address to flag that message as completed. For this, the processor will append an <code>execution_id</code> to the message which will be also passed in the callback by the service to identify what function this callback is for.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Priority (default Med): priority of a set of functions can be set to High. If this is the case, they will go into a preferential execution queue. Messages in the <code>High</code> priority queue will be taken over messages in the <code>Med</code> priority queue.
+All authorizations will have an initial state of <code>Enabled</code> .</p>
+</li>
+</ul>
+<p>Here is an example of an Authorization table after its creation:</p>
+<p><img src="../img/authorization_table.png" alt="Authorization Table" /></p>
+</li>
+<li>
+<p><code>add_external_domains([external_domains])</code>: to add an <code>ExternalDomain</code> to the Authorization contract, the owner will specify what type of <code>ExecutionEnvironment</code> it has (e.g. <code>CosmWasm</code>, <code>Evm</code>...) and all the information required for each type of <code>ExecutionEnvironment</code>. For example, if the owner is adding a domain that uses <code>CosmWasm</code> as ExecutionEnvironment, they need to provide all the Polytone information; if they are adding a domain that uses <code>EVM</code> as ExecutionEnvironment, they need to provide all the Hyperlane information and the <code>Encoder</code> to be used for correctly encoding messages in the corresponding format.</p>
+</li>
+<li>
+<p><code>modify_authorization(label, updated_values)</code>: can modify certain updatable fields of the authorization: start_time, expiration, max_concurrent_executions and priority.</p>
+</li>
+<li>
+<p><code>disable_authorization(label)</code>: puts an Authorization to state <code>Disabled</code>. These authorizations can not be run anymore.</p>
+</li>
+<li>
+<p><code>enable_authorization(label)</code>: puts an Authorization to state <code>Enabled</code> so that they can be run again.</p>
+</li>
+<li>
+<p><code>mint_authorization(label, vec[(addresses, Optional: amounts)])</code>: if the authorization is <code>Permissioned</code> with <code>CallLimit: true</code>, this function will mint the corresponding token amounts of that authorization to the addresses provided. If <code>CallLimit: false</code> it will mint 1 token to the new addresses provided.</p>
+</li>
+<li>
+<p><code>pause_processor(domain)</code>: pause the processor of the domain.</p>
+</li>
+<li>
+<p><code>resume_processor(domain)</code>: resume the processor of the domain.</p>
+</li>
+<li>
+<p><code>insert_messages(label, queue_position, queue_type, vec[ProcessorMessage])</code>: adds these set of messages to the queue at a specific position in the queue.</p>
+</li>
+<li>
+<p><code>evict_messages(label, queue_position, queue_type)</code>: remove the set of messages from the specific position in a queue.</p>
+</li>
+<li>
+<p><code>add_sub_owners(vec[addresses])</code>: add the current addresses as 2nd tier owners. These sub_owners can do everything except adding/removing admins.</p>
+</li>
+<li>
+<p><code>remove_sub_owners(vec[addresses])</code>: remove these addresses from the sub_owner list.</p>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../authorizations_processors/authorization_instantiation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../authorizations_processors/authorization_user_actions.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../authorizations_processors/authorization_instantiation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../authorizations_processors/authorization_user_actions.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>
