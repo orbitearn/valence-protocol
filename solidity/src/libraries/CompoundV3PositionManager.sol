@@ -71,75 +71,66 @@ contract CompoundV3PositionManager is Library {
 
         return decodedConfig;
     }
+    
+    /**
+     * @notice Supplies base token to the Compound V3 market and receives cUSDC (collateral tokens) in the inputAccount.
+     * @dev Only the designated processor can execute this function.
+     * The inputAccount must hold the base token (e.g., USDC) to supply.
+     * If amount is 0, the entire balance of the base token in the inputAccount will be supplied.
+     * @param amount The amount of base token to supply, or 0 to use the entire balance.
+     */
+    function supply(uint256 amount) external onlyProcessor {
+        CompoundV3PositionManagerConfig memory storedConfig = config;
 
-    // /**
-    //  * @notice Supplies tokens to the Aave protocol
-    //  * @dev Only the designated processor can execute this function.
-    //  * First approves the Aave pool to spend tokens, then supplies them to the protocol.
-    //  * The input account will receive the corresponding aTokens.
-    //  * If amount is 0, the entire balance of the supply asset in the input account will be used.
-    //  * @param amount The amount of tokens to supply, or 0 to use entire balance
-    //  */
-    // function supply(uint256 amount) external onlyProcessor {
-    //     // Get the current configuration.
-    //     AavePositionManagerConfig memory storedConfig = config;
+        uint256 balance = IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount));
 
-    //     // Get the current balance of the supply asset in the input account
-    //     uint256 balance = IERC20(storedConfig.supplyAsset).balanceOf(address(storedConfig.inputAccount));
+        if (balance == 0) {
+            revert("No base asset balance available");
+        }
 
-    //     // Check if balance is zero
-    //     if (balance == 0) {
-    //         revert("No supply asset balance available");
-    //     }
+        uint256 amountToSupply = amount == 0 ? balance : amount;
 
-    //     // If amount is 0, use the entire balance
-    //     uint256 amountToSupply = amount == 0 ? balance : amount;
+        if (balance < amountToSupply) {
+            revert("Insufficient base asset balance");
+        }
 
-    //     // Check if there's enough balance for the requested amount
-    //     if (balance < amountToSupply) {
-    //         revert("Insufficient supply asset balance");
-    //     }
+        // Approve the Compound market to spend the base asset from the input account
+        bytes memory encodedApproveCall =
+            abi.encodeCall(IERC20.approve, (storedConfig.marketProxyAddress, amountToSupply));
 
-    //     // Encode the approval call for the Aave pool.
-    //     bytes memory encodedApproveCall =
-    //         abi.encodeCall(IERC20.approve, (address(storedConfig.poolAddress), amountToSupply));
+        storedConfig.inputAccount.execute(storedConfig.baseAsset, 0, encodedApproveCall);
 
-    //     // Execute the approval from the input account
-    //     storedConfig.inputAccount.execute(storedConfig.supplyAsset, 0, encodedApproveCall);
+        // Supply the base asset to the Compound V3 market
+        bytes memory encodedSupplyCall = abi.encodeCall(
+            CometMainInterface.supply,
+            (storedConfig.baseAsset, amountToSupply)
+        );
 
-    //     // Supply the specified asset to the Aave protocol.
-    //     bytes memory encodedSupplyCall = abi.encodeCall(
-    //         IPool.supply,
-    //         (storedConfig.supplyAsset, amountToSupply, address(storedConfig.inputAccount), storedConfig.referralCode)
-    //     );
+        storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedSupplyCall);
+    }
 
-    //     // Execute the supply from the input account
-    //     storedConfig.inputAccount.execute(address(storedConfig.poolAddress), 0, encodedSupplyCall);
-    // }
+    function withdraw(uint256 amount) external onlyProcessor {
+        CompoundV3PositionManagerConfig memory storedConfig = config;
 
-    // /**
-    //  * @notice Withdraws previously supplied tokens from Aave
-    //  * @dev Only the designated processor can execute this function.
-    //  * Withdraws assets from Aave and sends them to the output account.
-    //  * This reduces the available collateral for any outstanding loans.
-    //  * @param amount The amount of tokens to withdraw, passing 0 will withdraw the entire balance
-    //  */
-    // function withdraw(uint256 amount) external onlyProcessor {
-    //     // Get the current configuration.
-    //     AavePositionManagerConfig memory storedConfig = config;
+        // uint256 balance = IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount));
 
-    //     // If amount is 0, use uint256.max to withdraw as much as possible
-    //     if (amount == 0) {
-    //         amount = type(uint256).max;
-    //     }
+        // if (balance == 0) {
+        //     revert("No base asset balance available");
+        // }
 
-    //     // Withdraw the specified asset from the Aave protocol.
-    //     bytes memory encodedWithdrawCall =
-    //         abi.encodeCall(IPool.withdraw, (storedConfig.supplyAsset, amount, address(storedConfig.outputAccount)));
+        // uint256 amountToWithdraw = amount == 0 ? balance : amount;
 
-    //     // Execute the withdraw from the input account
-    //     storedConfig.inputAccount.execute(address(storedConfig.poolAddress), 0, encodedWithdrawCall);
-    // }
+        // if (balance < amountToWithdraw) {
+        //     revert("Insufficient base asset balance");
+        // }
+
+        // bytes memory encodedWithdrawCall = abi.encodeCall(
+        //     CometMainInterface.withdraw,
+        //     (storedConfig.baseAsset, amountToWithdraw, address(storedConfig.outputAccount))
+        // );
+
+        // storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedWithdrawCall);
+    }
 
 
     /**

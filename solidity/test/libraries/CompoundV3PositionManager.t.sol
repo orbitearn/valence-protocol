@@ -66,7 +66,6 @@ contract CompoundV3PositionManagerTest is Test {
 
     }
 
-    // GivenValidConfigwhenupdateconfig_ThenConfigIsUpdated
     function test_GivenValidConfig_WhenUpdateConfigIsCalled_ThenConfigIsUpdated() public {
         // given
         MockERC20 newBaseToken = new MockERC20("New Base Token", "NBT", 18);
@@ -89,7 +88,6 @@ contract CompoundV3PositionManagerTest is Test {
         assertEq(actualMarketProxyAddress, newConfig.marketProxyAddress);
     }
 
-
     function test_RevertUpdateConfig_WithInvalidConfig_WhenInputAccountIsZeroAddress() public {
         // given
         CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
@@ -106,7 +104,6 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(owner);
         compoundV3PositionManager.updateConfig(abi.encode(newConfig));
     }
-
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenOutputAccountIsZeroAddress() public {
         // given
@@ -141,7 +138,6 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(owner);
         compoundV3PositionManager.updateConfig(abi.encode(newConfig));
     }
-
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenMarketProxyAddressIsZeroAddress() public {
         // given
@@ -179,176 +175,169 @@ contract CompoundV3PositionManagerTest is Test {
         compoundV3PositionManager.updateConfig(abi.encode(newConfig));
     }
 
-//     // ============== Supply Tests ==============
+    // ============== Supply Tests ==============
 
-//     function testSupplyWithSpecificAmount() public {
-//         // Mint tokens to input account
-//         uint256 amount = 1000 * 10 ** 18;
-//         vm.prank(owner);
-//         supplyToken.mint(address(inputAccount), amount);
+    function test_GivenValidConfig_WhenSupplyIsCalled_ThenSupplyIsSuccessful() public {
+        // given
+        uint256 amount = 1000 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), amount);
 
-//         // Execute supply as processor
-//         vm.prank(processor);
-//         aavePositionManager.supply(amount);
-//     }
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supply(amount);
+        
+        // then 
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supply");
+    }
 
-//     function testSupplyWithZeroAmount() public {
-//         // Mint tokens to input account
-//         uint256 balance = 500 * 10 ** 18;
-//         vm.prank(owner);
-//         supplyToken.mint(address(inputAccount), balance);
+    function test_GivenValidConfigAndZeroAmount_WhenSupplyIsCalled_ThenEntireBalanceIsSupplied() public {
+        // given
+        uint256 balance = 500 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), balance);
 
-//         // Execute supply with 0 (should use entire balance)
-//         vm.prank(processor);
-//         aavePositionManager.supply(0);
-//     }
+        // when 
+        vm.prank(processor);
+        compoundV3PositionManager.supply(0);
+        
+        // then 
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supplying entire balance");
+    }
 
-//     function testSupplyWithNoBalance() public {
-//         // Don't mint any tokens (zero balance)
+    function test_RevertSupply_WhenNoBaseAssetBalanceAvailable() public {
+        // given
+        // don't mint any tokens (zero balance)
+        
+        // expect
+        vm.expectRevert("No base asset balance available");
 
-//         // Execute supply operation (should fail)
-//         vm.prank(processor);
-//         vm.expectRevert("No supply asset balance available");
-//         aavePositionManager.supply(100 * 10 ** 18);
-//     }
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supply(100 * 10 ** 18);
+    }
 
-//     function testSupplyWithInsufficientBalance() public {
-//         // Mint tokens to input account
-//         uint256 balance = 100 * 10 ** 18;
-//         vm.prank(owner);
-//         supplyToken.mint(address(inputAccount), balance);
+    function test_RevertSupply_WhenInsufficientBaseAssetBalance() public {
+        // given
+        uint256 balance = 100 * 10 ** 18;
+        uint256 requestedAmount = 200 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), balance);
 
-//         // Execute supply with amount larger than balance (should fail)
-//         vm.prank(processor);
-//         vm.expectRevert("Insufficient supply asset balance");
-//         aavePositionManager.supply(200 * 10 ** 18);
-//     }
+        // expect
+        vm.expectRevert("Insufficient base asset balance");
 
-//     function testUnauthorizedSupply() public {
-//         address unauthorized = makeAddr("unauthorized");
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supply(requestedAmount);
+    }
 
-//         // Mint tokens to input account
-//         uint256 amount = 1000 * 10 ** 18;
-//         vm.prank(owner);
-//         supplyToken.mint(address(inputAccount), amount);
+    function test_RevertSupply_WhenCallerIsNotProcessor() public {
+        // given
+        address unauthorized = makeAddr("unauthorized");
+        uint256 amount = 1000 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), amount);
 
-//         // Attempt to supply as unauthorized user
-//         vm.prank(unauthorized);
-//         vm.expectRevert();
-//         aavePositionManager.supply(amount);
-//     }
+        // expect 
+        vm.expectRevert();
 
-//     // ============== Borrow Tests ==============
+        // when
+        vm.prank(unauthorized);
+        compoundV3PositionManager.supply(amount);
+    }
 
-//     function testBorrow() public {
-//         // Execute borrow as processor
-//         uint256 amount = 500 * 10 ** 18;
-//         vm.prank(processor);
-//         aavePositionManager.borrow(amount);
-//     }
+    function test_GivenExactBalance_WhenSupplyIsCalledWithSameAmount_ThenSupplyIsSuccessful() public {
+        // given
+        uint256 exactAmount = 250 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), exactAmount);
 
-//     function testUnauthorizedBorrow() public {
-//         address unauthorized = makeAddr("unauthorized");
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supply(exactAmount);
+        
+        // then - verify supply was successful
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supplying exact amount");
+    }
 
-//         // Attempt to borrow as unauthorized user
-//         vm.prank(unauthorized);
-//         vm.expectRevert();
-//         aavePositionManager.borrow(100 * 10 ** 18);
-//     }
+    function test_GivenPartialAmount_WhenSupplyIsCalled_ThenOnlyRequestedAmountIsSupplied() public {
+        // given
+        uint256 totalBalance = 1000 * 10 ** 18;
+        uint256 supplyAmount = 300 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), totalBalance);
 
-//     // ============== Withdraw Tests ==============
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supply(supplyAmount);
+        
+        // then - verify only the requested amount was supplied
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        uint256 expectedRemaining = totalBalance - supplyAmount;
+        assertEq(remainingBalance, expectedRemaining, "Input account should have correct remaining balance after partial supply");
+    }
 
-//     function testWithdraw() public {
-//         // Execute withdraw as processor
-//         uint256 amount = 300 * 10 ** 18;
-//         vm.prank(processor);
-//         aavePositionManager.withdraw(amount);
-//     }
+    // ============== Withdraw Tests ==============
 
-//     function testUnauthorizedWithdraw() public {
-//         address unauthorized = makeAddr("unauthorized");
+    function test_GivenValidConfig_WhenWithdrawIsCalled_ThenWithdrawIsSuccessful() public {
+        // given
+        uint256 amount = 1000 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), amount);
 
-//         // Attempt to withdraw as unauthorized user
-//         vm.prank(unauthorized);
-//         vm.expectRevert();
-//         aavePositionManager.withdraw(100 * 10 ** 18);
-//     }
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdraw(amount);
 
-//     // ============== Repay Tests ==============
+        // then 
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        assertEq(remainingBalance, 0, "Input account should have no remaining balance after withdraw");
+    }
 
-//     function testRepayWithSpecificAmount() public {
-//         // Mint tokens to input account
-//         uint256 amount = 200 * 10 ** 18;
-//         vm.prank(owner);
-//         borrowToken.mint(address(inputAccount), amount);
+    function test_GivenValidConfigAndZeroAmount_WhenWithdrawIsCalled_ThenEntireBalanceIsWithdrawn() public {
+        // given
+        uint256 balance = 500 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), balance);
 
-//         // Execute repay as processor
-//         vm.prank(processor);
-//         aavePositionManager.repay(amount);
-//     }
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdraw(0);
 
-//     function testRepayWithZeroAmount() public {
-//         // Mint tokens to input account
-//         uint256 balance = 150 * 10 ** 18;
-//         vm.prank(owner);
-//         borrowToken.mint(address(inputAccount), balance);
+        // then
+        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
+        assertEq(remainingBalance, 0, "Input account should have no remaining balance after withdraw");
+    }
 
-//         // Execute repay with 0 (should use entire balance)
-//         vm.prank(processor);
-//         aavePositionManager.repay(0);
-//     }
+    function test_RevertWithdraw_WhenNoBaseAssetBalanceAvailable() public {
+        // given
+        // don't mint any tokens (zero balance)
 
-//     function testRepayWithNoBalance() public {
-//         // Don't mint any tokens (zero balance)
+        // expect
+        vm.expectRevert("No base asset balance available");
 
-//         // Execute repay operation (should fail)
-//         vm.prank(processor);
-//         vm.expectRevert("No borrow asset balance available");
-//         aavePositionManager.repay(100 * 10 ** 18);
-//     }
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdraw(100 * 10 ** 18);
+    }
 
-//     function testRepayWithInsufficientBalance() public {
-//         // Mint tokens to input account
-//         uint256 balance = 50 * 10 ** 18;
-//         vm.prank(owner);
-//         borrowToken.mint(address(inputAccount), balance);
+    function test_RevertWithdraw_WhenInsufficientBaseAssetBalance() public {
+        // given
+        uint256 balance = 100 * 10 ** 18;
+        uint256 requestedAmount = 200 * 10 ** 18;
+        vm.prank(owner);
+        baseToken.mint(address(inputAccount), balance);
 
-//         // Execute repay with amount larger than balance (should fail)
-//         vm.prank(processor);
-//         vm.expectRevert("Insufficient borrow asset balance");
-//         aavePositionManager.repay(100 * 10 ** 18);
-//     }
+        // expect
+        vm.expectRevert("Insufficient base asset balance");
 
-//     function testUnauthorizedRepay() public {
-//         address unauthorized = makeAddr("unauthorized");
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdraw(requestedAmount);
+    }
 
-//         // Mint tokens to input account
-//         uint256 amount = 100 * 10 ** 18;
-//         vm.prank(owner);
-//         borrowToken.mint(address(inputAccount), amount);
-
-//         // Attempt to repay as unauthorized user
-//         vm.prank(unauthorized);
-//         vm.expectRevert();
-//         aavePositionManager.repay(amount);
-//     }
-
-//     // ============== Repay With Shares Tests ==============
-
-//     function testRepayWithShares() public {
-//         // Execute repayWithShares as processor
-//         uint256 amount = 100 * 10 ** 18;
-//         vm.prank(processor);
-//         aavePositionManager.repayWithShares(amount);
-//         (amount);
-//     }
-
-//     function testUnauthorizedRepayWithShares() public {
-//         address unauthorized = makeAddr("unauthorized");
-
-//         // Attempt to repayWithShares as unauthorized user
-//         vm.prank(unauthorized);
-//         vm.expectRevert();
-//         aavePositionManager.repayWithShares(100 * 10 ** 18);
-//     }
  }
