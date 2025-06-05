@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Coin, Empty, Uint64};
+use cosmwasm_std::{Addr, Coin, Empty};
 use cw_multi_test::{App, ContractWrapper};
 use valence_library_utils::{
     msg::InstantiateMsg,
@@ -7,7 +7,7 @@ use valence_library_utils::{
 
 use crate::msg::LibraryConfig;
 
-use super::suite::{ClearingQueueTestingSuite, DENOM_1};
+use super::suite::ClearingQueueTestingSuite;
 
 const USER_1: &str = "USER_1";
 const USER_2: &str = "USER_2";
@@ -15,11 +15,10 @@ const USER_3: &str = "USER_3";
 
 pub struct ClearingQueueTestingSuiteBuilder {
     pub inner: LibraryTestSuiteBase,
-    pub input_bal: Coin,
+    pub input_balances: Vec<Coin>,
     pub input_addr: Addr,
     pub processor: Addr,
     pub code_id: u64,
-    pub latest_id: Option<Uint64>,
 }
 
 impl LibraryTestSuite<Empty, Empty> for ClearingQueueTestingSuiteBuilder {
@@ -69,18 +68,18 @@ impl Default for ClearingQueueTestingSuiteBuilder {
 
         Self {
             inner,
-            input_bal: coin(1_000, DENOM_1),
+            input_balances: vec![],
             input_addr,
             code_id: clearing_code_id,
             processor,
-            latest_id: None,
         }
     }
 }
 
 impl ClearingQueueTestingSuiteBuilder {
-    pub fn with_input_balance(mut self, input_bal: Coin) -> Self {
-        self.input_bal = input_bal;
+    pub fn with_input_balances(mut self, input_coins: Vec<Coin>) -> Self {
+        self.input_balances = input_coins;
+        println!("input balances = {:?}", self.input_balances);
         self
     }
 
@@ -89,17 +88,10 @@ impl ClearingQueueTestingSuiteBuilder {
         self
     }
 
-    pub fn with_latest_obligation_id(mut self, obligation_id: u64) -> Self {
-        self.latest_id = Some(obligation_id.into());
-        self
-    }
-
     pub fn build(mut self) -> ClearingQueueTestingSuite {
-        let cfg = LibraryConfig::new(
-            valence_library_utils::LibraryAccountType::Addr(self.input_addr.to_string()),
-            self.input_bal.denom.to_string(),
-            self.latest_id,
-        );
+        let cfg = LibraryConfig::new(valence_library_utils::LibraryAccountType::Addr(
+            self.input_addr.to_string(),
+        ));
 
         let init_msg = InstantiateMsg {
             owner: self.owner().to_string(),
@@ -115,8 +107,8 @@ impl ClearingQueueTestingSuiteBuilder {
             let account_addr = self.account_init("input_account", vec![addr.to_string()]);
             assert_eq!(account_addr, input_addr);
 
-            if !self.input_bal.amount.is_zero() {
-                self.init_balance(&input_addr, vec![self.input_bal.clone()]);
+            if !self.input_balances.is_empty() {
+                self.init_balance(&input_addr, self.input_balances.clone());
             }
         }
 
