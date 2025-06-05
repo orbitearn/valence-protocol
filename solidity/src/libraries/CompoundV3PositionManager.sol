@@ -64,6 +64,7 @@ contract CompoundV3PositionManager is Library {
             revert("Output account can't be zero address");
         }
 
+        // Ensure the base asset is the same as the base asset of the market proxy
         if (decodedConfig.baseAsset != CometMainInterface(decodedConfig.marketProxyAddress).baseToken()) {
             revert("Market base asset and given base asset are not same");
         }
@@ -79,22 +80,39 @@ contract CompoundV3PositionManager is Library {
      * @param amount The amount of base token to supply, or 0 to use the entire balance.
      */
     function supply(uint256 amount) external onlyProcessor {
+        _supply(config.baseAsset, amount);
+    }
+
+    /**
+     * @notice Supplies collateral tokens to the Compound V3 market.
+     * @dev Only the designated processor can execute this function.
+     * The inputAccount must hold the collateral token (e.g., wETH) to supply.
+     * If amount is 0, the entire balance of the collateral token in the inputAccount will be supplied.
+     * @param asset The asset to supply
+     * @param amount The amount of collateral token to supply, or 0 to use the entire balance.
+     **/
+    function supplyCollateral(address asset, uint256 amount) external onlyProcessor {
+        _supply(asset, amount);
+    }
+
+    function _supply(address asset, uint256 amount) internal {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
         uint256 amountToSupply =
-            amount == 0 ? IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
+            amount == 0 ? IERC20(asset).balanceOf(address(storedConfig.inputAccount)) : amount;
 
-        // Approve the Compound market to spend the base asset from the input account
+        //Approve the Compound market to spend the base asset from the input account
         bytes memory encodedApproveCall =
             abi.encodeCall(IERC20.approve, (storedConfig.marketProxyAddress, amountToSupply));
 
-        storedConfig.inputAccount.execute(storedConfig.baseAsset, 0, encodedApproveCall);
+        storedConfig.inputAccount.execute(asset, 0, encodedApproveCall);
 
         // Supply the base asset to the Compound V3 market
         bytes memory encodedSupplyCall =
-            abi.encodeCall(CometMainInterface.supply, (storedConfig.baseAsset, amountToSupply));
+            abi.encodeCall(CometMainInterface.supply, (asset, amountToSupply));
 
         storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedSupplyCall);
+        
     }
 
     /**
@@ -103,14 +121,28 @@ contract CompoundV3PositionManager is Library {
      * @param amount The amount of base asset to withdraw, or 0 to withdraw the entire balance.
      */
     function withdraw(uint256 amount) external onlyProcessor {
+        _withdraw(config.baseAsset, amount);
+    }
+
+    /**
+     * @notice Withdraws a specified amount of specified asset from the Compound V3 market to the output account.
+     * @dev Only the designated processor can execute this function.
+     * @param asset The asset to withdraw
+     * @param amount The amount of base asset to withdraw, or 0 to withdraw the entire balance.
+     */
+    function withdrawCollateral(address asset, uint256 amount) external onlyProcessor {
+        _withdraw(asset, amount);
+    }
+
+    function _withdraw(address asset, uint256 amount) internal {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
-        // get the withdrawable amount of base asset from the market
-        uint256 balanceToWithdraw = amount == 0 ? type(uint256).max : amount;
+        // // get the withdrawable amount of base asset from the market
+        uint256 amountToWithdraw = amount == 0 ? type(uint256).max : amount;
 
         bytes memory encodedWithdrawCall = abi.encodeCall(
             CometMainInterface.withdrawTo,
-            (address(storedConfig.outputAccount), storedConfig.baseAsset, balanceToWithdraw)
+            (address(storedConfig.outputAccount), asset, amountToWithdraw)
         );
 
         storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedWithdrawCall);

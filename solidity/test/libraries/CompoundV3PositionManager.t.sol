@@ -242,21 +242,6 @@ contract CompoundV3PositionManagerTest is Test {
         assertEq(data, expectedData, "Data should be the encoded supply call");
     }
 
-    function test_RevertSupply_WhenCallerIsNotProcessor() public {
-        // given
-        address unauthorized = makeAddr("unauthorized");
-        uint256 amount = 1000 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), amount);
-
-        // expect
-        vm.expectRevert();
-
-        // when
-        vm.prank(unauthorized);
-        compoundV3PositionManager.supply(amount);
-    }
-
     function test_GivenValidAmount_WhenSupplyIsCalled_ThenApproveAmountOnMarketProxy() public {
         // given
         uint256 balance = 500 * 10 ** 18;
@@ -277,20 +262,20 @@ contract CompoundV3PositionManagerTest is Test {
         assertEq(data, expectedData, "Data should be the encoded approve call");
     }
 
-    // ============== Withdraw Tests ==============
-
-    function test_RevertWithdraw_WhenCallerIsNotProcessor() public {
+    function test_RevertSupply_WhenCallerIsNotProcessor() public {
         // given
         address unauthorized = makeAddr("unauthorized");
         uint256 amount = 1000 * 10 ** 18;
 
         // expect
-        vm.expectRevert();
+        vm.expectRevert("Only the processor can call this function");
 
         // when
         vm.prank(unauthorized);
-        compoundV3PositionManager.withdraw(amount);
+        compoundV3PositionManager.supply(amount);
     }
+
+    // ============== Withdraw Tests ==============
 
     function test_GivenValidAmount_WhenWithdrawIsCalled_ThenWithdrawAmountIsEqual() public {
         // given
@@ -331,4 +316,156 @@ contract CompoundV3PositionManagerTest is Test {
         );
         assertEq(data, expectedData, "Data should be the encoded withdraw to call");
     }
+
+    function test_RevertWithdraw_WhenCallerIsNotProcessor() public {
+        // given
+        address unauthorized = makeAddr("unauthorized");
+        uint256 amount = 1000 * 10 ** 18;
+
+        // expect
+        vm.expectRevert("Only the processor can call this function");
+
+        // when
+        vm.prank(unauthorized);
+        compoundV3PositionManager.withdraw(amount);
+    }
+
+    // ============== Withdraw Collateral Tests ==============
+
+    function test_GivenValidAmount_WhenWithdrawCollateralIsCalled_ThenWithdrawAmountIsEqual() public {
+        // given
+        uint256 exactAmount = 250 ether;
+        address token = vm.randomAddress();
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdrawCollateral(token, exactAmount);
+
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(marketProxyAddress), "Target should be the market proxy address");
+        assertEq(value, 0, "Value should be zero for withdraw to call");
+        bytes memory expectedData = abi.encodeWithSelector(
+            CometMainInterface.withdrawTo.selector, address(outputAccount), token, exactAmount
+        );
+        assertEq(data, expectedData, "Data should be the encoded withdraw to call");
+    }
+
+    function test_GivenZeroAmount_WhenWithdrawCollateralIsCalled_ThenWithdrawAmountIsUintMax() public {
+        // given
+        uint256 exactAmount = 0;
+        address token = vm.randomAddress();
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdrawCollateral(token, exactAmount);
+
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(marketProxyAddress), "Target should be the market proxy address");
+        assertEq(value, 0, "Value should be zero for withdraw to call");
+        bytes memory expectedData = abi.encodeWithSelector(
+            CometMainInterface.withdrawTo.selector, address(outputAccount), token, UINT256_MAX
+        );
+        assertEq(data, expectedData, "Data should be the encoded withdraw to call");
+    }
+
+    function test_RevertWithdrawCollateral_WhenCallerIsNotProcessor() public {
+        // given
+        address unauthorized = makeAddr("unauthorized");
+        uint256 amount = 1000 * 10 ** 18;
+        address token = vm.randomAddress();
+
+        // expect
+        vm.expectRevert("Only the processor can call this function");
+
+        // when
+        vm.prank(unauthorized);
+        compoundV3PositionManager.withdrawCollateral(token, amount);
+    }
+
+    // ============== Supply Collateral Tests ==============
+
+
+    function test_GivenValidAmount_WhenSupplyCollateralIsCalled_ThenSupplyAmountIsEqual() public {
+        // given
+        uint256 exactAmount = 1000 * 10 ** 18;
+        vm.prank(owner);
+        MockERC20 newToken = new MockERC20("New Token", "NT", 18);
+        newToken.mint(address(inputAccount), exactAmount * 2);
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supplyCollateral(address(newToken), exactAmount);
+
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint256 amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        assertEq(target, marketProxyAddress, "Target should be the market proxy address");
+        assertEq(amount, 0, "Value should be zero for supply call");
+        bytes memory expectedData =
+            abi.encodeWithSelector(CometMainInterface.supply.selector, address(newToken), exactAmount);
+        assertEq(data, expectedData, "Data should be the encoded supply call");
+    }
+
+    function test_GivenZeroAmount_WhenSupplyCollateralIsCalled_ThenSupplyAmountIsEntireBalance() public {
+        // given
+        uint256 balance = 500 * 10 ** 18;
+        vm.prank(owner);
+        MockERC20 newToken = new MockERC20("New Token", "NT", 18);
+        newToken.mint(address(inputAccount), balance);
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supplyCollateral(address(newToken), 0);
+
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint256 amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        assertEq(target, marketProxyAddress, "Target should be the market proxy address");
+        assertEq(amount, 0, "Value should be zero for supply call");
+        bytes memory expectedData =
+            abi.encodeWithSelector(CometMainInterface.supply.selector, address(newToken), balance);
+        assertEq(data, expectedData, "Data should be the encoded supply call");
+    }
+
+    function test_GivenValidAmount_WhenSupplyCollateralIsCalled_ThenApproveAmountOnMarketProxy() public {
+        // given
+        uint256 balance = 500 * 10 ** 18;
+        MockERC20 newToken = new MockERC20("New Token", "NT", 18);
+        newToken.mint(address(inputAccount), balance);
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.supplyCollateral(address(newToken), balance);
+
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(newToken), "Target should be the token address");
+        assertEq(value, 0, "Value should be zero for approve call");
+        bytes memory expectedData = abi.encodeWithSelector(IERC20.approve.selector, marketProxyAddress, balance);
+        assertEq(data, expectedData, "Data should be the encoded approve call");
+    }
+
+    function test_RevertSupplyCollateral_WhenCallerIsNotProcessor() public {
+        // given
+        address unauthorized = makeAddr("unauthorized");
+        uint256 amount = 1000 * 10 ** 18;
+
+        // expect
+        vm.expectRevert("Only the processor can call this function");
+
+        // when
+        vm.prank(unauthorized);
+        compoundV3PositionManager.supplyCollateral(address(baseToken), amount);
+    }
+    
 }
