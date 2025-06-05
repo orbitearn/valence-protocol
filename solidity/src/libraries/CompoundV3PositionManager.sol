@@ -17,7 +17,7 @@ contract CompoundV3PositionManager is Library {
      * @notice Configuration struct for CompoundV3 lending operations
      * @dev Used to define parameters for interacting with CompoundV3 protocol
      * @param inputAccount The Base Account from which transactions will be initiated
-     * @param outputAccount The Base Account that will receive withdrawals. 
+     * @param outputAccount The Base Account that will receive withdrawals.
      * @param baseAsset Address of the base token of the CompoundV3 market
      * @param marketProxyAddress Address of the CompoundV3 market proxy
      */
@@ -26,7 +26,6 @@ contract CompoundV3PositionManager is Library {
         BaseAccount outputAccount;
         address baseAsset;
         address marketProxyAddress;
-
     }
 
     /// @notice Holds the current configuration for the CompoundV3PositionManager.
@@ -71,7 +70,7 @@ contract CompoundV3PositionManager is Library {
 
         return decodedConfig;
     }
-    
+
     /**
      * @notice Supplies base token to the Compound V3 market and receives cUSDC (collateral tokens) in the inputAccount.
      * @dev Only the designated processor can execute this function.
@@ -82,7 +81,8 @@ contract CompoundV3PositionManager is Library {
     function supply(uint256 amount) external onlyProcessor {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
-        uint256 amountToSupply = amount == 0 ? IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
+        uint256 amountToSupply =
+            amount == 0 ? IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
 
         // Approve the Compound market to spend the base asset from the input account
         bytes memory encodedApproveCall =
@@ -91,10 +91,8 @@ contract CompoundV3PositionManager is Library {
         storedConfig.inputAccount.execute(storedConfig.baseAsset, 0, encodedApproveCall);
 
         // Supply the base asset to the Compound V3 market
-        bytes memory encodedSupplyCall = abi.encodeCall(
-            CometMainInterface.supply,
-            (storedConfig.baseAsset, amountToSupply)
-        );
+        bytes memory encodedSupplyCall =
+            abi.encodeCall(CometMainInterface.supply, (storedConfig.baseAsset, amountToSupply));
 
         storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedSupplyCall);
     }

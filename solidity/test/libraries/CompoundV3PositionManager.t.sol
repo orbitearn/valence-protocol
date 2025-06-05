@@ -11,7 +11,6 @@ import {MockBaseAccount} from "../mocks/MockBaseAccount.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {CometMainInterface} from "../../src/libraries/interfaces/compoundV3/CometMainInterface.sol";
 
-
 contract CompoundV3PositionManagerTest is Test {
     // Contract under test
     CompoundV3PositionManager public compoundV3PositionManager;
@@ -45,7 +44,8 @@ contract CompoundV3PositionManagerTest is Test {
         vm.startPrank(owner);
 
         // Create and encode config directly
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory config = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory config = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: BaseAccount(payable(address(inputAccount))),
             outputAccount: BaseAccount(payable(address(outputAccount))),
             baseAsset: address(baseToken),
@@ -60,25 +60,29 @@ contract CompoundV3PositionManagerTest is Test {
         vm.label(address(outputAccount), "outputAccount");
         vm.label(address(baseToken), "baseToken");
         vm.label(marketProxyAddress, "marketProxyAddress");
-
     }
 
     // ============== Configuration Tests ==============
 
     function test_GivenValidConfig_WhenContractIsDeployed_ThenConfigIsSet() public view {
-        (BaseAccount actualInputAccount, BaseAccount actualOutputAccount, address actualBaseAsset, address actualMarketProxyAddress) = compoundV3PositionManager.config();
+        (
+            BaseAccount actualInputAccount,
+            BaseAccount actualOutputAccount,
+            address actualBaseAsset,
+            address actualMarketProxyAddress
+        ) = compoundV3PositionManager.config();
 
         assertEq(address(actualInputAccount), address(inputAccount));
         assertEq(address(actualOutputAccount), address(outputAccount));
         assertEq(actualBaseAsset, address(baseToken));
         assertEq(actualMarketProxyAddress, marketProxyAddress);
-
     }
 
     function test_GivenValidConfig_WhenUpdateConfigIsCalled_ThenConfigIsUpdated() public {
         // given
         MockERC20 newBaseToken = new MockERC20("New Base Token", "NBT", 18);
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: new BaseAccount(owner, new address[](0)),
             outputAccount: new BaseAccount(owner, new address[](0)),
             baseAsset: address(newBaseToken),
@@ -90,7 +94,12 @@ contract CompoundV3PositionManagerTest is Test {
         compoundV3PositionManager.updateConfig(abi.encode(newConfig));
 
         // then
-        (BaseAccount actualInputAccount, BaseAccount actualOutputAccount, address actualBaseAsset, address actualMarketProxyAddress) = compoundV3PositionManager.config();
+        (
+            BaseAccount actualInputAccount,
+            BaseAccount actualOutputAccount,
+            address actualBaseAsset,
+            address actualMarketProxyAddress
+        ) = compoundV3PositionManager.config();
         assertEq(address(actualInputAccount), address(newConfig.inputAccount));
         assertEq(address(actualOutputAccount), address(newConfig.outputAccount));
         assertEq(actualBaseAsset, newConfig.baseAsset);
@@ -99,7 +108,8 @@ contract CompoundV3PositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenInputAccountIsZeroAddress() public {
         // given
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: BaseAccount(payable(address(0))),
             outputAccount: new BaseAccount(owner, new address[](0)),
             baseAsset: vm.randomAddress(),
@@ -116,7 +126,8 @@ contract CompoundV3PositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenOutputAccountIsZeroAddress() public {
         // given
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: new BaseAccount(owner, new address[](0)),
             outputAccount: BaseAccount(payable(address(0))),
             baseAsset: vm.randomAddress(),
@@ -133,7 +144,8 @@ contract CompoundV3PositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenMarketBaseAssetAndGivenBaseAssetAreNotSame() public {
         // given
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: new BaseAccount(owner, new address[](0)),
             outputAccount: new BaseAccount(owner, new address[](0)),
             baseAsset: vm.randomAddress(),
@@ -150,7 +162,8 @@ contract CompoundV3PositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenMarketProxyAddressIsZeroAddress() public {
         // given
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: new BaseAccount(owner, new address[](0)),
             outputAccount: new BaseAccount(owner, new address[](0)),
             baseAsset: address(baseToken),
@@ -166,10 +179,11 @@ contract CompoundV3PositionManagerTest is Test {
     }
 
     function test_RevertUpdateConfig_WithUnauthorized_WhenCallerIsNotOwner() public {
-         // given
+        // given
         address unauthorized = makeAddr("unauthorized");
         MockERC20 newBaseToken = new MockERC20("New Base Token", "NBT", 18);
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory newConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
             inputAccount: new BaseAccount(owner, new address[](0)),
             outputAccount: new BaseAccount(owner, new address[](0)),
             baseAsset: address(newBaseToken),
@@ -195,14 +209,15 @@ contract CompoundV3PositionManagerTest is Test {
         // when
         vm.prank(processor);
         compoundV3PositionManager.supply(exactAmount);
-        
-        // then 
+
+        // then
         vm.expectRevert();
         MockBaseAccount(inputAccount).executeParams(2);
-        (address target, uint amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
         assertEq(target, marketProxyAddress, "Target should be the market proxy address");
         assertEq(amount, 0, "Value should be zero for supply call");
-        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), exactAmount);
+        bytes memory expectedData =
+            abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), exactAmount);
         assertEq(data, expectedData, "Data should be the encoded supply call");
     }
 
@@ -212,17 +227,18 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(owner);
         baseToken.mint(address(inputAccount), balance);
 
-        // when 
+        // when
         vm.prank(processor);
         compoundV3PositionManager.supply(0);
-        
-        // then 
+
+        // then
         vm.expectRevert();
         MockBaseAccount(inputAccount).executeParams(2);
-        (address target, uint amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
         assertEq(target, marketProxyAddress, "Target should be the market proxy address");
         assertEq(amount, 0, "Value should be zero for supply call");
-        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), balance);
+        bytes memory expectedData =
+            abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), balance);
         assertEq(data, expectedData, "Data should be the encoded supply call");
     }
 
@@ -233,7 +249,7 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(owner);
         baseToken.mint(address(inputAccount), amount);
 
-        // expect 
+        // expect
         vm.expectRevert();
 
         // when
@@ -247,11 +263,11 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(owner);
         baseToken.mint(address(inputAccount), balance);
 
-        // when 
+        // when
         vm.prank(processor);
         compoundV3PositionManager.supply(0);
-        
-        // then 
+
+        // then
         vm.expectRevert();
         MockBaseAccount(inputAccount).executeParams(2);
         (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
@@ -259,7 +275,6 @@ contract CompoundV3PositionManagerTest is Test {
         assertEq(value, 0, "Value should be zero for approve call");
         bytes memory expectedData = abi.encodeWithSelector(IERC20.approve.selector, marketProxyAddress, balance);
         assertEq(data, expectedData, "Data should be the encoded approve call");
-
     }
 
     // ============== Withdraw Tests ==============
@@ -284,14 +299,16 @@ contract CompoundV3PositionManagerTest is Test {
         // when
         vm.prank(processor);
         compoundV3PositionManager.withdraw(exactAmount);
-        
+
         // then
         vm.expectRevert();
         MockBaseAccount(inputAccount).executeParams(1);
         (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
         assertEq(target, address(marketProxyAddress), "Target should be the token address");
         assertEq(value, 0, "Value should be zero for withdraw to call");
-        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), exactAmount);
+        bytes memory expectedData = abi.encodeWithSelector(
+            CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), exactAmount
+        );
         assertEq(data, expectedData, "Data should be the encoded withdraw to call");
     }
 
@@ -309,7 +326,9 @@ contract CompoundV3PositionManagerTest is Test {
         (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
         assertEq(target, address(marketProxyAddress), "Target should be the token address");
         assertEq(value, 0, "Value should be zero for withdraw to call");
-        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), UINT256_MAX);
+        bytes memory expectedData = abi.encodeWithSelector(
+            CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), UINT256_MAX
+        );
         assertEq(data, expectedData, "Data should be the encoded withdraw to call");
     }
 }

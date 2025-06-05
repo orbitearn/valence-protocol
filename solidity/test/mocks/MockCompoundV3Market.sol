@@ -5,7 +5,7 @@ import {IERC20} from "forge-std/src/interfaces/IERC20.sol";
 
 contract MockCompoundV3Market {
     address public baseToken;
-    
+
     constructor(address _baseToken) {
         baseToken = _baseToken;
     }

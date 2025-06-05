@@ -10,22 +10,13 @@ contract MockBaseAccount {
 
     ExecuteParams[] public executeParams;
 
-    function execute(
-        address target,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bytes memory result) {
-        ExecuteParams memory params = ExecuteParams({
-            target: target,
-            value: value,
-            data: data
-        });
+    function execute(address target, uint256 value, bytes calldata data) external returns (bytes memory result) {
+        ExecuteParams memory params = ExecuteParams({target: target, value: value, data: data});
 
         executeParams.push(params);
 
         return new bytes(0);
     }
-
 
     /// @dev Allows the contract to receive native tokens (e.g. ETH) that can later be used by approved libraries or the owner in execute() calls
     receive() external payable {}
