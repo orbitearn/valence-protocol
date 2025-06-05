@@ -82,17 +82,7 @@ contract CompoundV3PositionManager is Library {
     function supply(uint256 amount) external onlyProcessor {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
-        uint256 balance = IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount));
-
-        if (balance == 0) {
-            revert("No base asset balance available");
-        }
-
-        uint256 amountToSupply = amount == 0 ? balance : amount;
-
-        if (balance < amountToSupply) {
-            revert("Insufficient base asset balance");
-        }
+        uint256 amountToSupply = amount == 0 ? IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
 
         // Approve the Compound market to spend the base asset from the input account
         bytes memory encodedApproveCall =
@@ -109,29 +99,24 @@ contract CompoundV3PositionManager is Library {
         storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedSupplyCall);
     }
 
+    /**
+     * @notice Withdraws a specified amount of base asset from the Compound V3 market to the output account.
+     * @dev Only the designated processor can execute this function.
+     * @param amount The amount of base asset to withdraw, or 0 to withdraw the entire balance.
+     */
     function withdraw(uint256 amount) external onlyProcessor {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
-        // uint256 balance = IERC20(storedConfig.baseAsset).balanceOf(address(storedConfig.inputAccount));
+        // get the withdrawable amount of base asset from the market
+        uint256 balanceToWithdraw = amount == 0 ? type(uint256).max : amount;
 
-        // if (balance == 0) {
-        //     revert("No base asset balance available");
-        // }
+        bytes memory encodedWithdrawCall = abi.encodeCall(
+            CometMainInterface.withdrawTo,
+            (address(storedConfig.outputAccount), storedConfig.baseAsset, balanceToWithdraw)
+        );
 
-        // uint256 amountToWithdraw = amount == 0 ? balance : amount;
-
-        // if (balance < amountToWithdraw) {
-        //     revert("Insufficient base asset balance");
-        // }
-
-        // bytes memory encodedWithdrawCall = abi.encodeCall(
-        //     CometMainInterface.withdraw,
-        //     (storedConfig.baseAsset, amountToWithdraw, address(storedConfig.outputAccount))
-        // );
-
-        // storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedWithdrawCall);
+        storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedWithdrawCall);
     }
-
 
     /**
      * @dev Internal initialization function called during construction

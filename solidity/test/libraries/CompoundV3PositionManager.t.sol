@@ -7,15 +7,18 @@ import {IERC20} from "forge-std/src/interfaces/IERC20.sol";
 import {BaseAccount} from "../../src/accounts/BaseAccount.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {MockCompoundV3Market} from "../mocks/MockCompoundV3Market.sol";
+import {MockBaseAccount} from "../mocks/MockBaseAccount.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {CometMainInterface} from "../../src/libraries/interfaces/compoundV3/CometMainInterface.sol";
+
 
 contract CompoundV3PositionManagerTest is Test {
     // Contract under test
     CompoundV3PositionManager public compoundV3PositionManager;
 
     // Mock contracts
-    BaseAccount public inputAccount;
-    BaseAccount public outputAccount;
+    MockBaseAccount public inputAccount;
+    MockBaseAccount public outputAccount;
     MockERC20 public baseToken;
     address public marketProxyAddress;
 
@@ -34,8 +37,8 @@ contract CompoundV3PositionManagerTest is Test {
         marketProxyAddress = address(new MockCompoundV3Market(address(baseToken)));
         // Create mock accounts
         vm.startPrank(owner);
-        inputAccount = new BaseAccount(owner, new address[](0));
-        outputAccount = new BaseAccount(owner, new address[](0));
+        inputAccount = new MockBaseAccount();
+        outputAccount = new MockBaseAccount();
         vm.stopPrank();
 
         // Deploy CompoundV3PositionManager contract
@@ -43,20 +46,26 @@ contract CompoundV3PositionManagerTest is Test {
 
         // Create and encode config directly
         CompoundV3PositionManager.CompoundV3PositionManagerConfig memory config = CompoundV3PositionManager.CompoundV3PositionManagerConfig({
-            inputAccount: inputAccount,
-            outputAccount: outputAccount,
+            inputAccount: BaseAccount(payable(address(inputAccount))),
+            outputAccount: BaseAccount(payable(address(outputAccount))),
             baseAsset: address(baseToken),
             marketProxyAddress: marketProxyAddress
         });
 
         compoundV3PositionManager = new CompoundV3PositionManager(owner, processor, abi.encode(config));
-        inputAccount.approveLibrary(address(compoundV3PositionManager));
+        // inputAccount.approveLibrary(address(compoundV3PositionManager));
         vm.stopPrank();
+
+        vm.label(address(inputAccount), "inputAccount");
+        vm.label(address(outputAccount), "outputAccount");
+        vm.label(address(baseToken), "baseToken");
+        vm.label(marketProxyAddress, "marketProxyAddress");
+
     }
 
     // ============== Configuration Tests ==============
 
-    function test_GivenValidConfig_WhenContractIsDeployed_ThenConfigIsSet() public {
+    function test_GivenValidConfig_WhenContractIsDeployed_ThenConfigIsSet() public view {
         (BaseAccount actualInputAccount, BaseAccount actualOutputAccount, address actualBaseAsset, address actualMarketProxyAddress) = compoundV3PositionManager.config();
 
         assertEq(address(actualInputAccount), address(inputAccount));
@@ -177,22 +186,27 @@ contract CompoundV3PositionManagerTest is Test {
 
     // ============== Supply Tests ==============
 
-    function test_GivenValidConfig_WhenSupplyIsCalled_ThenSupplyIsSuccessful() public {
+    function test_GivenValidAmount_WhenSupplyIsCalled_ThenSupplyAmountIsEqual() public {
         // given
-        uint256 amount = 1000 * 10 ** 18;
+        uint256 exactAmount = 1000 * 10 ** 18;
         vm.prank(owner);
-        baseToken.mint(address(inputAccount), amount);
+        baseToken.mint(address(inputAccount), exactAmount * 2);
 
         // when
         vm.prank(processor);
-        compoundV3PositionManager.supply(amount);
+        compoundV3PositionManager.supply(exactAmount);
         
         // then 
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supply");
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        assertEq(target, marketProxyAddress, "Target should be the market proxy address");
+        assertEq(amount, 0, "Value should be zero for supply call");
+        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), exactAmount);
+        assertEq(data, expectedData, "Data should be the encoded supply call");
     }
 
-    function test_GivenValidConfigAndZeroAmount_WhenSupplyIsCalled_ThenEntireBalanceIsSupplied() public {
+    function test_GivenZeroAmount_WhenSupplyIsCalled_ThenSupplyAmountIsEntireBalance() public {
         // given
         uint256 balance = 500 * 10 ** 18;
         vm.prank(owner);
@@ -203,35 +217,13 @@ contract CompoundV3PositionManagerTest is Test {
         compoundV3PositionManager.supply(0);
         
         // then 
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supplying entire balance");
-    }
-
-    function test_RevertSupply_WhenNoBaseAssetBalanceAvailable() public {
-        // given
-        // don't mint any tokens (zero balance)
-        
-        // expect
-        vm.expectRevert("No base asset balance available");
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.supply(100 * 10 ** 18);
-    }
-
-    function test_RevertSupply_WhenInsufficientBaseAssetBalance() public {
-        // given
-        uint256 balance = 100 * 10 ** 18;
-        uint256 requestedAmount = 200 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), balance);
-
-        // expect
-        vm.expectRevert("Insufficient base asset balance");
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.supply(requestedAmount);
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint amount, bytes memory data) = MockBaseAccount(inputAccount).executeParams(1);
+        assertEq(target, marketProxyAddress, "Target should be the market proxy address");
+        assertEq(amount, 0, "Value should be zero for supply call");
+        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.supply.selector, address(baseToken), balance);
+        assertEq(data, expectedData, "Data should be the encoded supply call");
     }
 
     function test_RevertSupply_WhenCallerIsNotProcessor() public {
@@ -249,95 +241,75 @@ contract CompoundV3PositionManagerTest is Test {
         compoundV3PositionManager.supply(amount);
     }
 
-    function test_GivenExactBalance_WhenSupplyIsCalledWithSameAmount_ThenSupplyIsSuccessful() public {
-        // given
-        uint256 exactAmount = 250 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), exactAmount);
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.supply(exactAmount);
-        
-        // then - verify supply was successful
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        assertEq(remainingBalance, 0, "Input account should have no remaining balance after supplying exact amount");
-    }
-
-    function test_GivenPartialAmount_WhenSupplyIsCalled_ThenOnlyRequestedAmountIsSupplied() public {
-        // given
-        uint256 totalBalance = 1000 * 10 ** 18;
-        uint256 supplyAmount = 300 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), totalBalance);
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.supply(supplyAmount);
-        
-        // then - verify only the requested amount was supplied
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        uint256 expectedRemaining = totalBalance - supplyAmount;
-        assertEq(remainingBalance, expectedRemaining, "Input account should have correct remaining balance after partial supply");
-    }
-
-    // ============== Withdraw Tests ==============
-
-    function test_GivenValidConfig_WhenWithdrawIsCalled_ThenWithdrawIsSuccessful() public {
-        // given
-        uint256 amount = 1000 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), amount);
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.withdraw(amount);
-
-        // then 
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        assertEq(remainingBalance, 0, "Input account should have no remaining balance after withdraw");
-    }
-
-    function test_GivenValidConfigAndZeroAmount_WhenWithdrawIsCalled_ThenEntireBalanceIsWithdrawn() public {
+    function test_GivenValidAmount_WhenSupplyIsCalled_ThenApproveAmountOnMarketProxy() public {
         // given
         uint256 balance = 500 * 10 ** 18;
         vm.prank(owner);
         baseToken.mint(address(inputAccount), balance);
 
+        // when 
+        vm.prank(processor);
+        compoundV3PositionManager.supply(0);
+        
+        // then 
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(2);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(baseToken), "Target should be the token address");
+        assertEq(value, 0, "Value should be zero for approve call");
+        bytes memory expectedData = abi.encodeWithSelector(IERC20.approve.selector, marketProxyAddress, balance);
+        assertEq(data, expectedData, "Data should be the encoded approve call");
+
+    }
+
+    // ============== Withdraw Tests ==============
+
+    function test_RevertWithdraw_WhenCallerIsNotProcessor() public {
+        // given
+        address unauthorized = makeAddr("unauthorized");
+        uint256 amount = 1000 * 10 ** 18;
+
+        // expect
+        vm.expectRevert();
+
+        // when
+        vm.prank(unauthorized);
+        compoundV3PositionManager.withdraw(amount);
+    }
+
+    function test_GivenValidAmount_WhenWithdrawIsCalled_ThenWithdrawAmountIsEqual() public {
+        // given
+        uint256 exactAmount = 250 ether;
+
         // when
         vm.prank(processor);
-        compoundV3PositionManager.withdraw(0);
+        compoundV3PositionManager.withdraw(exactAmount);
+        
+        // then
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(marketProxyAddress), "Target should be the token address");
+        assertEq(value, 0, "Value should be zero for withdraw to call");
+        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), exactAmount);
+        assertEq(data, expectedData, "Data should be the encoded withdraw to call");
+    }
+
+    function test_GivenZeroAmount_WhenWithdrawIsCalled_ThenWithdrawAmountIsUintMax() public {
+        // given
+        uint256 exactAmount = 0;
+
+        // when
+        vm.prank(processor);
+        compoundV3PositionManager.withdraw(exactAmount);
 
         // then
-        uint256 remainingBalance = baseToken.balanceOf(address(inputAccount));
-        assertEq(remainingBalance, 0, "Input account should have no remaining balance after withdraw");
+        vm.expectRevert();
+        MockBaseAccount(inputAccount).executeParams(1);
+        (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
+        assertEq(target, address(marketProxyAddress), "Target should be the token address");
+        assertEq(value, 0, "Value should be zero for withdraw to call");
+        bytes memory expectedData = abi.encodeWithSelector(CometMainInterface.withdrawTo.selector, address(outputAccount), address(baseToken), UINT256_MAX);
+        assertEq(data, expectedData, "Data should be the encoded withdraw to call");
     }
-
-    function test_RevertWithdraw_WhenNoBaseAssetBalanceAvailable() public {
-        // given
-        // don't mint any tokens (zero balance)
-
-        // expect
-        vm.expectRevert("No base asset balance available");
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.withdraw(100 * 10 ** 18);
-    }
-
-    function test_RevertWithdraw_WhenInsufficientBaseAssetBalance() public {
-        // given
-        uint256 balance = 100 * 10 ** 18;
-        uint256 requestedAmount = 200 * 10 ** 18;
-        vm.prank(owner);
-        baseToken.mint(address(inputAccount), balance);
-
-        // expect
-        vm.expectRevert("Insufficient base asset balance");
-
-        // when
-        vm.prank(processor);
-        compoundV3PositionManager.withdraw(requestedAmount);
-    }
-
- }
+}
