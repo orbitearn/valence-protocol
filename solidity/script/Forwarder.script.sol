@@ -26,7 +26,7 @@ contract ForwarderScript is Script {
         // Get private keys from environment variables
         uint256 ownerPrivateKey = vm.envUint("OWNER_PRIVATE_KEY");
         uint256 processorPrivateKey = vm.envUint("PROCESSOR_PRIVATE_KEY");
-        
+
         owner = vm.addr(ownerPrivateKey);
         processor = vm.addr(processorPrivateKey);
 
@@ -45,24 +45,15 @@ contract ForwarderScript is Script {
 
         // Create forwarding configurations
         Forwarder.ForwardingConfig[] memory forwardingConfigs = new Forwarder.ForwardingConfig[](3);
-        
+
         // Forward native ETH with max 0.1 ETH per execution
-        forwardingConfigs[0] = Forwarder.ForwardingConfig({
-            tokenAddress: NATIVE_ETH,
-            maxAmount: 0.1 ether
-        });
+        forwardingConfigs[0] = Forwarder.ForwardingConfig({tokenAddress: NATIVE_ETH, maxAmount: 0.1 ether});
 
         // Forward USDC with max 1000 USDC per execution (assuming 6 decimals)
-        forwardingConfigs[1] = Forwarder.ForwardingConfig({
-            tokenAddress: USDC_SEPOLIA,
-            maxAmount: 1000 * 10**6
-        });
+        forwardingConfigs[1] = Forwarder.ForwardingConfig({tokenAddress: USDC_SEPOLIA, maxAmount: 1000 * 10 ** 6});
 
         // Forward WETH with max 0.5 WETH per execution
-        forwardingConfigs[2] = Forwarder.ForwardingConfig({
-            tokenAddress: WETH_SEPOLIA,
-            maxAmount: 0.5 ether
-        });
+        forwardingConfigs[2] = Forwarder.ForwardingConfig({tokenAddress: WETH_SEPOLIA, maxAmount: 0.5 ether});
 
         // Create main configuration
         Forwarder.ForwarderConfig memory config = Forwarder.ForwarderConfig({
@@ -74,10 +65,10 @@ contract ForwarderScript is Script {
         });
 
         bytes memory configBytes = abi.encode(config);
-        
+
         // Deploy Forwarder
         forwarder = new Forwarder(owner, processor, configBytes);
-        
+
         console.log("Forwarder deployed at:", address(forwarder));
 
         // Approve the library from input account
@@ -105,7 +96,7 @@ contract ForwarderScript is Script {
     function deployWithBlockInterval() external {
         uint256 ownerPrivateKey = vm.envUint("OWNER_PRIVATE_KEY");
         uint256 processorPrivateKey = vm.envUint("PROCESSOR_PRIVATE_KEY");
-        
+
         owner = vm.addr(ownerPrivateKey);
         processor = vm.addr(processorPrivateKey);
 
@@ -116,10 +107,7 @@ contract ForwarderScript is Script {
 
         // Simple configuration with just native ETH forwarding
         Forwarder.ForwardingConfig[] memory forwardingConfigs = new Forwarder.ForwardingConfig[](1);
-        forwardingConfigs[0] = Forwarder.ForwardingConfig({
-            tokenAddress: NATIVE_ETH,
-            maxAmount: 0.01 ether
-        });
+        forwardingConfigs[0] = Forwarder.ForwardingConfig({tokenAddress: NATIVE_ETH, maxAmount: 0.01 ether});
 
         Forwarder.ForwarderConfig memory config = Forwarder.ForwarderConfig({
             inputAccount: inputAccount,
@@ -131,11 +119,11 @@ contract ForwarderScript is Script {
 
         bytes memory configBytes = abi.encode(config);
         forwarder = new Forwarder(owner, processor, configBytes);
-        
+
         inputAccount.approveLibrary(address(forwarder));
 
         vm.stopBroadcast();
 
         console.log("Forwarder (block-based) deployed at:", address(forwarder));
     }
-} 
+}

@@ -28,7 +28,7 @@ contract SplitterScript is Script {
         // Get private keys from environment variables
         uint256 ownerPrivateKey = vm.envUint("OWNER_PRIVATE_KEY");
         uint256 processorPrivateKey = vm.envUint("PROCESSOR_PRIVATE_KEY");
-        
+
         owner = vm.addr(ownerPrivateKey);
         processor = vm.addr(processorPrivateKey);
 
@@ -51,7 +51,7 @@ contract SplitterScript is Script {
 
         // Create split configurations
         Splitter.SplitConfig[] memory splits = new Splitter.SplitConfig[](6);
-        
+
         // Native ETH splits (Fixed Ratio)
         // 50% to output account 1
         splits[0] = Splitter.SplitConfig({
@@ -83,7 +83,7 @@ contract SplitterScript is Script {
             outputAccount: outputAccount1,
             token: USDC_SEPOLIA,
             splitType: Splitter.SplitType.FixedAmount,
-            splitData: abi.encode(1000 * 10**6) // 1000 USDC
+            splitData: abi.encode(1000 * 10 ** 6) // 1000 USDC
         });
 
         // 500 USDC to output account 2
@@ -91,7 +91,7 @@ contract SplitterScript is Script {
             outputAccount: outputAccount2,
             token: USDC_SEPOLIA,
             splitType: Splitter.SplitType.FixedAmount,
-            splitData: abi.encode(500 * 10**6) // 500 USDC
+            splitData: abi.encode(500 * 10 ** 6) // 500 USDC
         });
 
         // WETH splits (Fixed Ratio)
@@ -104,16 +104,13 @@ contract SplitterScript is Script {
         });
 
         // Create main configuration
-        Splitter.SplitterConfig memory config = Splitter.SplitterConfig({
-            inputAccount: inputAccount,
-            splits: splits
-        });
+        Splitter.SplitterConfig memory config = Splitter.SplitterConfig({inputAccount: inputAccount, splits: splits});
 
         bytes memory configBytes = abi.encode(config);
-        
+
         // Deploy Splitter
         splitter = new Splitter(owner, processor, configBytes);
-        
+
         console.log("Splitter deployed at:", address(splitter));
 
         // Approve the library from input account
@@ -147,13 +144,11 @@ contract SplitterScript is Script {
         console.log("Processor:", processor);
     }
 
-
-
     // Alternative configuration with dynamic ratio (requires oracle)
     function deployWithDynamicRatio() external {
         uint256 ownerPrivateKey = vm.envUint("OWNER_PRIVATE_KEY");
         uint256 processorPrivateKey = vm.envUint("PROCESSOR_PRIVATE_KEY");
-        
+
         owner = vm.addr(ownerPrivateKey);
         processor = vm.addr(processorPrivateKey);
 
@@ -171,18 +166,15 @@ contract SplitterScript is Script {
             splitData: abi.encode(0.01 ether)
         });
 
-        Splitter.SplitterConfig memory config = Splitter.SplitterConfig({
-            inputAccount: inputAccount,
-            splits: splits
-        });
+        Splitter.SplitterConfig memory config = Splitter.SplitterConfig({inputAccount: inputAccount, splits: splits});
 
         bytes memory configBytes = abi.encode(config);
         splitter = new Splitter(owner, processor, configBytes);
-        
+
         inputAccount.approveLibrary(address(splitter));
 
         vm.stopBroadcast();
 
         console.log("Simple Splitter deployed at:", address(splitter));
     }
-} 
+}

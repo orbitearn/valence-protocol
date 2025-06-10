@@ -14,8 +14,8 @@ contract CompoundV3PositionManagerScript is Script {
     address constant COMPOUND_V3_USDC_MARKET = 0xAec1F48e02Cfb822Be958B68C7957156EB3F0b6e;
     // USDC on Sepolia
     address constant USDC_SEPOLIA = 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238;
-    
-    // For mainnet 
+
+    // For mainnet
     // address constant COMPOUND_V3_USDC_MARKET = 0xc3d688B66703497DAA19211EEdff47f25384cdc3;
     // address constant USDC_MAINNET = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
@@ -29,7 +29,7 @@ contract CompoundV3PositionManagerScript is Script {
         // Get private keys from environment variables
         uint256 ownerPrivateKey = vm.envUint("OWNER_PRIVATE_KEY");
         uint256 processorPrivateKey = vm.envUint("PROCESSOR_PRIVATE_KEY");
-        
+
         owner = vm.addr(ownerPrivateKey);
         processor = vm.addr(processorPrivateKey);
 
@@ -53,19 +53,19 @@ contract CompoundV3PositionManagerScript is Script {
         require(marketBaseToken == USDC_SEPOLIA, "Base token mismatch");
 
         // Create configuration
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory config = 
-            CompoundV3PositionManager.CompoundV3PositionManagerConfig({
-                inputAccount: inputAccount,
-                outputAccount: outputAccount,
-                baseAsset: USDC_SEPOLIA,
-                marketProxyAddress: COMPOUND_V3_USDC_MARKET
-            });
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory config = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
+            inputAccount: inputAccount,
+            outputAccount: outputAccount,
+            baseAsset: USDC_SEPOLIA,
+            marketProxyAddress: COMPOUND_V3_USDC_MARKET
+        });
 
         bytes memory configBytes = abi.encode(config);
-        
+
         // Deploy CompoundV3PositionManager
         positionManager = new CompoundV3PositionManager(owner, processor, configBytes);
-        
+
         console.log("CompoundV3PositionManager deployed at:", address(positionManager));
 
         // Approve the library from both accounts
@@ -87,6 +87,4 @@ contract CompoundV3PositionManagerScript is Script {
         console.log("Owner:", owner);
         console.log("Processor:", processor);
     }
-
-
-} 
+}

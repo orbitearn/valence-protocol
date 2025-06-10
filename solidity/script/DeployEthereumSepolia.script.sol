@@ -6,15 +6,14 @@ pragma solidity ^0.8.28;
  * @notice Comprehensive deployment script for all Valence Protocol contracts
  * @dev Before running this script, make sure to set up your environment variables.
  *      See DEPLOYMENT_SETUP.md for detailed instructions.
- * 
+ *
  * Required Environment Variables:
  * - OWNER_PRIVATE_KEY: Private key for contract owner
  * - PROCESSOR_PRIVATE_KEY: Private key for processor account
- * 
+ *
  * Usage:
  *   forge script script/DeployAll.script.sol --fork-url sepolia --broadcast
  */
-
 import {Script} from "forge-std/src/Script.sol";
 import {CCTPTransfer} from "../src/libraries/CCTPTransfer.sol";
 import {CompoundV3PositionManager} from "../src/libraries/CompoundV3PositionManager.sol";
@@ -31,16 +30,18 @@ import {CometMainInterface} from "../src/libraries/interfaces/compoundV3/CometMa
 import {IPool} from "aave-v3-origin/interfaces/IPool.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {console} from "forge-std/src/console.sol";
+import {Authorization} from "../src/authorization/Authorization.sol";
+import {LiteProcessor} from "../src/processor/LiteProcessor.sol";
 
 contract DeployAllScript is Script {
     // Ethereum Sepolia Testnet Addresses
-    address constant USDC_SEPOLIA = 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238;
-    address constant WETH_SEPOLIA = 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14;
-    address constant DAI_SEPOLIA = 0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357;
-    address constant COMPOUND_V3_USDC_MARKET_SEPOLIA = 0xAec1F48e02Cfb822Be958B68C7957156EB3F0b6e;
-    address constant CCTP_TOKEN_MESSENGER_SEPOLIA = 0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5;
-    address constant AAVE_POOL_SEPOLIA = 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951;
-    
+    address USDC = vm.envAddress("USDC");
+    address WETH = vm.envAddress("WETH");
+    address DAI = vm.envAddress("DAI");
+    address COMPOUND_V3_USDC_MARKET = vm.envAddress("COMPOUND_V3_USDC_MARKET");
+    address CCTP_TOKEN_MESSENGER = vm.envAddress("CCTP_TOKEN_MESSENGER");
+    address AAVE_POOL = vm.envAddress("AAVE_POOL");
+
     // Native ETH
     address constant NATIVE_ETH = address(0);
 
@@ -54,7 +55,7 @@ contract DeployAllScript is Script {
     Splitter public splitter;
     Splitter public splitterArbitrum; // Arbitrum deployment
     ValenceVault public valenceVault;
-    
+
     // Ethereum Sepolia Accounts
     BaseAccount public inputAccount1;
     BaseAccount public inputAccount2;
@@ -68,7 +69,7 @@ contract DeployAllScript is Script {
     BaseAccount public outputAccount3; // For Splitter
     BaseAccount public outputAccount4; // For Splitter
     BaseAccount public cctpAccount;
-    
+
     // // Arbitrum Sepolia Accounts
     // BaseAccount public arbitrumInputAccount1; // For Compound on Arbitrum
     // BaseAccount public arbitrumOutputAccount1; // For Compound on Arbitrum
@@ -79,13 +80,12 @@ contract DeployAllScript is Script {
     // BaseAccount public pancakeOutputAccount; // For PancakeSwap
 
     address owner;
-    address processor;
+    LiteProcessor processor;
 
     function run() external {
         // Get private keys from environment variables with helpful error messages
         uint256 ownerPrivateKey;
-        uint256 processorPrivateKey;
-        
+
         try vm.envUint("OWNER_PRIVATE_KEY") returns (uint256 key) {
             ownerPrivateKey = key;
         } catch {
@@ -94,23 +94,13 @@ contract DeployAllScript is Script {
             console.log("export OWNER_PRIVATE_KEY=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
             revert("Missing OWNER_PRIVATE_KEY environment variable");
         }
-        
-        try vm.envUint("PROCESSOR_PRIVATE_KEY") returns (uint256 key) {
-            processorPrivateKey = key;
-        } catch {
-            console.log("ERROR: PROCESSOR_PRIVATE_KEY environment variable not set!");
-            console.log("Please set it in your .env file or export it:");
-            console.log("export PROCESSOR_PRIVATE_KEY=0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
-            revert("Missing PROCESSOR_PRIVATE_KEY environment variable");
-        }
-        
+
         owner = vm.addr(ownerPrivateKey);
-        processor = vm.addr(processorPrivateKey);
 
         console.log("=== COMPREHENSIVE DEPLOYMENT SCRIPT ===");
         console.log("Network: Sepolia Testnet");
         console.log("Owner:", owner);
-        console.log("Processor:", processor);
+        console.log("Processor:", address(processor));
         console.log("");
         console.log("Environment Variables Used:");
         console.log("  OWNER_PRIVATE_KEY: ****");
@@ -121,8 +111,9 @@ contract DeployAllScript is Script {
 
         // Deploy all required accounts
         _deployAccounts();
-        
+
         // Deploy all contracts
+        _deployAuthorizationAndProcessor();
         _deployCCTPTransfer();
         _deployCompoundV3PositionManager();
         _deployAavePositionManager();
@@ -135,9 +126,37 @@ contract DeployAllScript is Script {
         _printDeploymentSummary();
     }
 
+    function _deployAuthorizationAndProcessor() internal {
+        console.log("Deploying Authorization and Processor...");
+
+        // Deploy Authorization contract
+        address[] memory authorizedAddresses = new address[](1);
+        authorizedAddresses[0] = owner; // Owner is the only authorized address for now
+
+        Authorization authorization = new Authorization(
+            owner,
+            owner,
+            address(0), // Placeholder for mailbox, set to zero for now
+            true // Enable authorization
+        );
+
+        console.log("  Authorization deployed at:", address(authorization));
+
+        // Deploy Processor contract
+        processor = new LiteProcessor(
+            "", // Placeholder for mailbox, set to zero for now
+            address(0), // Placeholder for mailbox, set to zero for now
+            1, // Origin domain ID, can be set as needed
+            authorizedAddresses
+        );
+
+        console.log("  Processor deployed at:", address(processor));
+        console.log("");
+    }
+
     function _deployAccounts() internal {
         console.log("1. Deploying Accounts...");
-        
+
         // Deploy BaseAccount contracts
         inputAccount1 = new BaseAccount(owner, new address[](0));
         inputAccount2 = new BaseAccount(owner, new address[](0));
@@ -150,7 +169,7 @@ contract DeployAllScript is Script {
         outputAccount2 = new BaseAccount(owner, new address[](0));
         outputAccount3 = new BaseAccount(owner, new address[](0));
         outputAccount4 = new BaseAccount(owner, new address[](0));
-        
+
         // Deploy Account contract for CCTP
         cctpAccount = new BaseAccount(owner, new address[](0));
 
@@ -171,20 +190,20 @@ contract DeployAllScript is Script {
 
     function _deployCCTPTransfer() internal {
         console.log("2. Deploying CCTPTransfer...");
-        
+
         // Create CCTP configuration
         CCTPTransfer.CCTPTransferConfig memory cctpConfig = CCTPTransfer.CCTPTransferConfig({
-            amount: 100 * 10**6, // 100 USDC
+            amount: 100 * 10 ** 6, // 100 USDC
             mintRecipient: bytes32(uint256(uint160(owner))), // Convert owner address to bytes32
             inputAccount: cctpAccount,
             destinationDomain: 5, // Polygon domain (adjust as needed)
-            cctpTokenMessenger: ITokenMessenger(CCTP_TOKEN_MESSENGER_SEPOLIA),
-            transferToken: USDC_SEPOLIA
+            cctpTokenMessenger: ITokenMessenger(CCTP_TOKEN_MESSENGER),
+            transferToken: USDC
         });
 
         bytes memory cctpConfigBytes = abi.encode(cctpConfig);
-        cctpTransfer = new CCTPTransfer(owner, processor, cctpConfigBytes);
-        
+        cctpTransfer = new CCTPTransfer(owner, address(processor), cctpConfigBytes);
+
         // Approve library
         cctpAccount.approveLibrary(address(cctpTransfer));
 
@@ -195,23 +214,23 @@ contract DeployAllScript is Script {
 
     function _deployCompoundV3PositionManager() internal {
         console.log("3. Deploying CompoundV3PositionManager...");
-        
+
         // Verify market configuration
-        address marketBaseToken = CometMainInterface(COMPOUND_V3_USDC_MARKET_SEPOLIA).baseToken();
-        require(marketBaseToken == USDC_SEPOLIA, "Market base token mismatch");
+        address marketBaseToken = CometMainInterface(COMPOUND_V3_USDC_MARKET).baseToken();
+        require(marketBaseToken == USDC, "Market base token mismatch");
 
         // Create Compound configuration
-        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory compoundConfig = 
-            CompoundV3PositionManager.CompoundV3PositionManagerConfig({
-                inputAccount: inputAccount1,
-                outputAccount: outputAccount1,
-                baseAsset: USDC_SEPOLIA,
-                marketProxyAddress: COMPOUND_V3_USDC_MARKET_SEPOLIA
-            });
+        CompoundV3PositionManager.CompoundV3PositionManagerConfig memory compoundConfig = CompoundV3PositionManager
+            .CompoundV3PositionManagerConfig({
+            inputAccount: inputAccount1,
+            outputAccount: outputAccount1,
+            baseAsset: USDC,
+            marketProxyAddress: COMPOUND_V3_USDC_MARKET
+        });
 
         bytes memory compoundConfigBytes = abi.encode(compoundConfig);
-        positionManager = new CompoundV3PositionManager(owner, processor, compoundConfigBytes);
-        
+        positionManager = new CompoundV3PositionManager(owner, address(processor), compoundConfigBytes);
+
         // Approve library
         inputAccount1.approveLibrary(address(positionManager));
         outputAccount1.approveLibrary(address(positionManager));
@@ -223,21 +242,20 @@ contract DeployAllScript is Script {
 
     function _deployAavePositionManager() internal {
         console.log("4. Deploying AavePositionManager...");
-        
+
         // Create Aave configuration
-        AavePositionManager.AavePositionManagerConfig memory aaveConfig = 
-            AavePositionManager.AavePositionManagerConfig({
-                poolAddress: IPool(AAVE_POOL_SEPOLIA),
-                inputAccount: aaveInputAccount,
-                outputAccount: aaveOutputAccount,
-                supplyAsset: USDC_SEPOLIA,
-                borrowAsset: DAI_SEPOLIA,
-                referralCode: 0
-            });
+        AavePositionManager.AavePositionManagerConfig memory aaveConfig = AavePositionManager.AavePositionManagerConfig({
+            poolAddress: IPool(AAVE_POOL),
+            inputAccount: aaveInputAccount,
+            outputAccount: aaveOutputAccount,
+            supplyAsset: USDC,
+            borrowAsset: DAI,
+            referralCode: 0
+        });
 
         bytes memory aaveConfigBytes = abi.encode(aaveConfig);
-        aavePositionManager = new AavePositionManager(owner, processor, aaveConfigBytes);
-        
+        aavePositionManager = new AavePositionManager(owner, address(processor), aaveConfigBytes);
+
         // Approve library
         aaveInputAccount.approveLibrary(address(aavePositionManager));
         aaveOutputAccount.approveLibrary(address(aavePositionManager));
@@ -249,22 +267,22 @@ contract DeployAllScript is Script {
 
     function _deployForwarder() internal {
         console.log("5. Deploying Forwarder...");
-        
+
         // Create forwarding configurations
         Forwarder.ForwardingConfig[] memory forwardingConfigs = new Forwarder.ForwardingConfig[](3);
-        
+
         forwardingConfigs[0] = Forwarder.ForwardingConfig({
             tokenAddress: NATIVE_ETH,
             maxAmount: 0.01 ether // Small amount for testing
         });
 
         forwardingConfigs[1] = Forwarder.ForwardingConfig({
-            tokenAddress: USDC_SEPOLIA,
-            maxAmount: 100 * 10**6 // 100 USDC
+            tokenAddress: USDC,
+            maxAmount: 100 * 10 ** 6 // 100 USDC
         });
 
         forwardingConfigs[2] = Forwarder.ForwardingConfig({
-            tokenAddress: WETH_SEPOLIA,
+            tokenAddress: WETH,
             maxAmount: 0.01 ether // 0.01 WETH
         });
 
@@ -278,8 +296,8 @@ contract DeployAllScript is Script {
         });
 
         bytes memory forwarderConfigBytes = abi.encode(forwarderConfig);
-        forwarder = new Forwarder(owner, processor, forwarderConfigBytes);
-        
+        forwarder = new Forwarder(owner, address(processor), forwarderConfigBytes);
+
         // Approve library
         inputAccount2.approveLibrary(address(forwarder));
 
@@ -290,10 +308,10 @@ contract DeployAllScript is Script {
 
     function _deploySplitter() internal {
         console.log("6. Deploying Splitter...");
-        
+
         // Create split configurations
         Splitter.SplitConfig[] memory splits = new Splitter.SplitConfig[](5);
-        
+
         // Native ETH splits (Fixed Ratio) - Total must equal 100%
         // 40% to output account 1
         splits[0] = Splitter.SplitConfig({
@@ -323,29 +341,27 @@ contract DeployAllScript is Script {
         // 500 USDC to output account 1
         splits[3] = Splitter.SplitConfig({
             outputAccount: outputAccount1,
-            token: USDC_SEPOLIA,
+            token: USDC,
             splitType: Splitter.SplitType.FixedAmount,
-            splitData: abi.encode(500 * 10**6) // 500 USDC
+            splitData: abi.encode(500 * 10 ** 6) // 500 USDC
         });
 
         // WETH splits (Fixed Ratio)
         // 100% to output account 3
         splits[4] = Splitter.SplitConfig({
             outputAccount: outputAccount3,
-            token: WETH_SEPOLIA,
+            token: WETH,
             splitType: Splitter.SplitType.FixedRatio,
             splitData: abi.encode(1000000000000000000) // 1.0 * 10^18 (100%)
         });
 
         // Create main splitter configuration
-        Splitter.SplitterConfig memory splitterConfig = Splitter.SplitterConfig({
-            inputAccount: inputAccount3,
-            splits: splits
-        });
+        Splitter.SplitterConfig memory splitterConfig =
+            Splitter.SplitterConfig({inputAccount: inputAccount3, splits: splits});
 
         bytes memory splitterConfigBytes = abi.encode(splitterConfig);
-        splitter = new Splitter(owner, processor, splitterConfigBytes);
-        
+        splitter = new Splitter(owner, address(processor), splitterConfigBytes);
+
         // Approve library
         inputAccount3.approveLibrary(address(splitter));
 
@@ -356,7 +372,7 @@ contract DeployAllScript is Script {
 
     function _deployValenceVault() internal {
         console.log("7. Deploying ValenceVault...");
-        
+
         // Create vault configuration
         ValenceVault.FeeConfig memory feeConfig = ValenceVault.FeeConfig({
             depositFeeBps: 50, // 0.5% deposit fee
@@ -367,7 +383,7 @@ contract DeployAllScript is Script {
 
         ValenceVault.FeeDistributionConfig memory feeDistribution = ValenceVault.FeeDistributionConfig({
             strategistAccount: owner, // Strategist receives fees
-            platformAccount: processor, // Platform receives fees
+            platformAccount: address(processor), // Platform receives fees
             strategistRatioBps: 5000 // 50% to strategist, 50% to platform
         });
 
@@ -377,26 +393,29 @@ contract DeployAllScript is Script {
             strategist: owner,
             fees: feeConfig,
             feeDistribution: feeDistribution,
-            depositCap: 1000000 * 10**6, // 1M USDC cap
+            depositCap: 1000000 * 10 ** 6, // 1M USDC cap
             withdrawLockupPeriod: 7 days, // 7 day withdraw lockup
             maxWithdrawFeeBps: 500 // Max 5% withdraw fee
         });
 
         bytes memory vaultConfigBytes = abi.encode(vaultConfig);
-        
+
         // Deploy vault using proxy pattern (proper way for upgradeable contracts)
         ValenceVault implementation = new ValenceVault();
-        
+
         // Prepare initialization data
-        bytes memory initData = abi.encodeCall(ValenceVault.initialize, (
-            owner,
-            vaultConfigBytes,
-            USDC_SEPOLIA,
-            "Valence USDC Vault",
-            "vUSDC",
-            1e18 // 1:1 starting rate
-        ));
-        
+        bytes memory initData = abi.encodeCall(
+            ValenceVault.initialize,
+            (
+                owner,
+                vaultConfigBytes,
+                USDC,
+                "Valence USDC Vault",
+                "vUSDC",
+                1e18 // 1:1 starting rate
+            )
+        );
+
         // Deploy proxy and initialize
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         valenceVault = ValenceVault(address(proxy));
@@ -434,16 +453,16 @@ contract DeployAllScript is Script {
         console.log("  ValenceVault:", address(valenceVault));
         console.log("");
         console.log("TOKEN ADDRESSES:");
-        console.log("  USDC:", USDC_SEPOLIA);
-        console.log("  WETH:", WETH_SEPOLIA);
-        console.log("  DAI:", DAI_SEPOLIA);
-        console.log("  Compound Market:", COMPOUND_V3_USDC_MARKET_SEPOLIA);
-        console.log("  Aave Pool:", AAVE_POOL_SEPOLIA);
-        console.log("  CCTP Messenger:", CCTP_TOKEN_MESSENGER_SEPOLIA);
+        console.log("  USDC:", USDC);
+        console.log("  WETH:", WETH);
+        console.log("  DAI:", DAI);
+        console.log("  Compound Market:", COMPOUND_V3_USDC_MARKET);
+        console.log("  Aave Pool:", AAVE_POOL);
+        console.log("  CCTP Messenger:", CCTP_TOKEN_MESSENGER);
         console.log("");
         console.log("ROLES:");
         console.log("  Owner:", owner);
-        console.log("  Processor:", processor);
+        console.log("  Processor:", address(processor));
         console.log("");
         console.log("All contracts deployed and configured successfully!");
     }
@@ -456,13 +475,4 @@ contract DeployAllScript is Script {
             revert("OWNER_PRIVATE_KEY environment variable not set. Please export it or add to .env file.");
         }
     }
-
-    function _getProcessorPrivateKey() internal view returns (uint256) {
-        try vm.envUint("PROCESSOR_PRIVATE_KEY") returns (uint256 key) {
-            return key;
-        } catch {
-            revert("PROCESSOR_PRIVATE_KEY environment variable not set. Please export it or add to .env file.");
-        }
-    }
-
-} 
+}

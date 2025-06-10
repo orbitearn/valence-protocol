@@ -2,9 +2,14 @@
 src  = "src"
 out  = "out"
 libs = ["dependencies"]
+solc = "0.8.28"
+evm_version = "cancun"
+bytecode_hash = "none"
+cbor_metadata = false
 # Enable IR pipeline to support complex memory-to-storage copying (required for array of structs)
 viaIR     = true
 optimizer = true
+always_use_create_2_factory = true
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 [dependencies]
