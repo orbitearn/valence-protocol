@@ -5,11 +5,13 @@ import {Test} from "forge-std/src/Test.sol";
 import {PendlePositionManager} from "../../src/libraries/PendlePositionManager.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {MockPendleMarket} from "./mocks/MockPendleMarket.sol";
+import {BaseAccount} from "../../src/accounts/BaseAccount.sol";
 
 contract PendlePositionManagerTest is Test {
     address owner = address(0x1);
     address processor = address(0x2);
-    address libraryAddress = address(0x3);
+    BaseAccount inputAccount;
+    BaseAccount outputAccount;
     address user = address(0x4);
     uint256[] maturities = [1680000000, 1690000000];
     uint256 defaultMaturity = 1680000000;
@@ -25,20 +27,29 @@ contract PendlePositionManagerTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
+        inputAccount = new BaseAccount(owner, new address[](0));
+        outputAccount = new BaseAccount(owner, new address[](0));
         underlying = new MockERC20("Underlying", "UND", 18);
         ptToken = new MockERC20("PT", "PT", 18);
         market = new MockPendleMarket(address(underlying));
         market.setPTToken(defaultMaturity, address(ptToken));
         market.setPTToken(otherMaturity, address(ptToken));
-        manager = new PendlePositionManager(
-            processor,
-            libraryAddress,
-            address(market),
-            address(underlying),
-            address(ptToken),
-            maturities
-        );
+        // Prepare config struct
+        PendlePositionManager.PendlePositionManagerConfig memory config = PendlePositionManager.PendlePositionManagerConfig({
+            inputAccount: inputAccount,
+            outputAccount: outputAccount,
+            pendleMarket: address(market),
+            underlyingAsset: address(underlying),
+            ptToken: address(ptToken),
+            allowedMaturities: maturities
+        });
+        bytes memory configBytes = abi.encode(config);
+        manager = new PendlePositionManager(owner, processor, configBytes);
         underlying.mint(user, initialUnderlying);
+        // Approve manager as library for input/output accounts
+        vm.startPrank(owner);
+        inputAccount.approveLibrary(address(manager));
+        outputAccount.approveLibrary(address(manager));
         vm.stopPrank();
     }
 
@@ -51,8 +62,9 @@ contract PendlePositionManagerTest is Test {
         vm.prank(processor);
         manager.mintPT(user, mintAmount, defaultMaturity);
         // Then
-        assertEq(ptToken.balanceOf(user), mintAmount, "PT minted");
         assertEq(underlying.balanceOf(user), initialUnderlying - mintAmount, "Underlying deducted");
+        // PT minted to user via mock
+        assertEq(ptToken.balanceOf(user), mintAmount, "PT minted");
     }
 
     function test_MintPT_InvalidMaturity() public {
@@ -84,7 +96,7 @@ contract PendlePositionManagerTest is Test {
         vm.stopPrank();
         // Then
         vm.prank(user);
-        vm.expectRevert("Not processor or library");
+        vm.expectRevert("Only the processor can call this function");
         manager.mintPT(user, mintAmount, defaultMaturity);
     }
 
@@ -95,11 +107,9 @@ contract PendlePositionManagerTest is Test {
         vm.stopPrank();
         vm.prank(processor);
         manager.mintPT(user, mintAmount, defaultMaturity);
-
         vm.startPrank(user);
         ptToken.approve(address(manager), mintAmount);
         vm.stopPrank();
-
         // When
         vm.prank(processor);
         manager.redeemPT(user, mintAmount, defaultMaturity);
@@ -118,7 +128,6 @@ contract PendlePositionManagerTest is Test {
         vm.startPrank(user);
         ptToken.approve(address(manager), mintAmount);
         vm.stopPrank();
-
         // Then
         vm.prank(processor);
         vm.expectRevert("Maturity not allowed");
@@ -133,7 +142,6 @@ contract PendlePositionManagerTest is Test {
         vm.stopPrank();
         vm.prank(processor);
         manager.mintPT(user, mintAmount, defaultMaturity);
-        
         // Then
         vm.prank(processor);
         vm.expectRevert("Insufficient PT balance");
@@ -150,7 +158,7 @@ contract PendlePositionManagerTest is Test {
         manager.mintPT(user, mintAmount, defaultMaturity);
         // Then
         vm.prank(user);
-        vm.expectRevert("Not processor or library");
+        vm.expectRevert("Only the processor can call this function");
         manager.redeemPT(user, mintAmount, defaultMaturity);
     }
 
@@ -181,31 +189,11 @@ contract PendlePositionManagerTest is Test {
     function test_OnlyOwnerCanManageMaturities() public {
         // Given
         vm.prank(user);
-        vm.expectRevert("Not owner");
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user));
         manager.addAllowedMaturity(notAllowedMaturity);
         vm.prank(user);
         // Then
-        vm.expectRevert("Not owner");
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user));
         manager.removeAllowedMaturity(defaultMaturity);
-    }
-
-    function test_SetProcessorAndLibrary() public {
-        // Given
-        address newProcessor = address(0x5);
-        address newLibrary = address(0x6);
-        // Then
-        vm.prank(user);
-        vm.expectRevert("Not owner");
-        manager.setProcessor(newProcessor);
-        vm.prank(user);
-        vm.expectRevert("Not owner");
-        manager.setLibraryAddress(newLibrary);
-        // When
-        vm.prank(owner);
-        manager.setProcessor(newProcessor);
-        assertEq(manager.processor(), newProcessor);
-        vm.prank(owner);
-        manager.setLibraryAddress(newLibrary);
-        assertEq(manager.libraryAddress(), newLibrary);
     }
 } 
