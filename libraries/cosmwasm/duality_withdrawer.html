@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>MaxBTC Issuer - Valence Protocol Documentation</title>
+        <title>Duality Withdrawer - Valence Protocol Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -180,32 +180,32 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="valence-maxbtc-issuer-library"><a class="header" href="#valence-maxbtc-issuer-library">Valence maxBTC Issuer Library</a></h1>
-<p>The <strong>Valence maxBTC Issuer Library</strong> library allows <strong>depositing</strong> a BTC derivative asset from an <strong>input account</strong> in the maxBTC issuer contract and deposit the resulting maxBTC into the <strong>output account</strong>. It is typically used as part of a <strong>Valence Program</strong>. In that context, a <strong>Processor</strong> contract will be the main contract interacting with this library.</p>
+                        <h1 id="duality-withdrawer-library"><a class="header" href="#duality-withdrawer-library">Duality Withdrawer library</a></h1>
+<p>The <strong>Valence Duality Withdrawer library</strong> allows users to <strong>withdraw liquidity</strong> from a Duality Liquidity Pool from an <strong>input account</strong> and deposit the withdrawn tokens into an <strong>output account</strong>.</p>
 <h2 id="high-level-flow"><a class="header" href="#high-level-flow">High-level flow</a></h2>
 <pre class="mermaid">---
-title: maxBTC Issuer Library
+title: Duality Liquidity Withdrawal
 ---
 graph LR
   IA((Input
       Account))
-  MB((maxBTC
-      Contract))
   OA((Output
-      Account))
+          Account))
   P[Processor]
-  MIL[maxBTC Issuer
-      Library]
-  P -- 1/Deposit --&gt; MIL
-  MIL -- 2/Query balance --&gt; IA
-  MIL -- 3/Do Deposit
-        funds --&gt; IA
-  IA -- 4/Deposit derivative --&gt; MB
-  MB -- 5/Send maxBTC --&gt; OA
+  S[Duality
+      Liquidity
+      Withdrawal]
+  DP[Duality
+     Pool]
+  P -- 1/Withdraw Liquidity --&gt; S
+  S -- 2/Query balances --&gt; IA
+  S -- 3/Do Withdraw Liquidity --&gt; IA
+  IA -- 4/Withdraw Liquidity
+                  [LP Tokens] --&gt; DP
+  DP -- 4'/Transfer assets --&gt; OA
 </pre>
-<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Function</th><th>Parameters</th><th>Description</th></tr></thead><tbody>
-<tr><td><strong>Issue</strong></td><td></td><td>Deposits the BTC derivative balance of the <strong>input account</strong> into the <strong>maxBTC contract</strong> and deposits the resulting maxBTC into the <strong>output account</strong>.</td></tr>
+<tr><td><strong>WithdrawLiquidity</strong></td><td><code>amount: Option&lt;Uint128&gt;</code></td><td>Withdraw liquidity from the configured <strong>Duality Pool</strong> from the <strong>input account</strong>, and transfer the withdrawned tokens to the configured <strong>output account</strong>. If no amount is specified, the entire position is withdrawn.</td></tr>
 </tbody></table>
 </div>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
@@ -213,24 +213,37 @@ graph LR
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct LibraryConfig {
+    // Address of the input account 
     pub input_addr: LibraryAccountType,
+    // Address of the output account 
     pub output_addr: LibraryAccountType,
-    // Address of the maxBTC issuer contract
-    pub maxbtc_issuer_addr: String,
-    // Denom of the BTC derivative we are going to deposit
-    pub btc_denom: String,
+    // Address of the pool we are going to withdraw liquidity from 
+    pub pool_addr: String,
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h2>
+<h3 id="withdrawal-process"><a class="header" href="#withdrawal-process">Withdrawal Process</a></h3>
+<ol>
+<li><strong>Balance Check</strong>: Queries the balance of the LP tokens in the input account. To withdraw liquidity, the wallet address must have a positive balance of LP tokens.</li>
+<li><strong>Amount Calculation</strong>: Uses the exact amount if specified; otherwise, withdraws the entire balance.</li>
+<li><strong>Withdraw Liquidity</strong>: Executes a <code>Withdraw</code> message, which withdraws the specified amount of liquidity to the Valence input account.</li>
+<li><strong>Reply Handling</strong>: Uses the CosmWasm reply mechanism to handle the two-step withdrawal process. Upon successful withdrawal, the withdrawn tokens are transferred to the Valence output account.</li>
+</ol>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<ul>
+<li><strong>No Funds</strong>: Returns an error if attempting to withdraw with a zero balance of LP tokens.</li>
+<li><strong>Duality Integration</strong>: Propagates errors from the Duality Protocol during withdrawal operations.</li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../libraries/cosmwasm/mars_lending.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../libraries/cosmwasm/duality_lper.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../libraries/cosmwasm/magma_lper.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../libraries/cosmwasm/forwarder.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -240,11 +253,11 @@ graph LR
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../libraries/cosmwasm/mars_lending.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../libraries/cosmwasm/duality_lper.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../libraries/cosmwasm/magma_lper.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../libraries/cosmwasm/forwarder.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

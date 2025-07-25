@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>MaxBTC Issuer - Valence Protocol Documentation</title>
+        <title>Magma LPer - Valence Protocol Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -180,32 +180,33 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="valence-maxbtc-issuer-library"><a class="header" href="#valence-maxbtc-issuer-library">Valence maxBTC Issuer Library</a></h1>
-<p>The <strong>Valence maxBTC Issuer Library</strong> library allows <strong>depositing</strong> a BTC derivative asset from an <strong>input account</strong> in the maxBTC issuer contract and deposit the resulting maxBTC into the <strong>output account</strong>. It is typically used as part of a <strong>Valence Program</strong>. In that context, a <strong>Processor</strong> contract will be the main contract interacting with this library.</p>
+                        <h1 id="magma-lper-library"><a class="header" href="#magma-lper-library">Magma LPer Library</a></h1>
+<p>The <strong>Valence Magma LPer library</strong> allows users to <strong>deposit</strong> into a Magma Vault Pool from an <strong>input account</strong> and receive shares into an <strong>output account</strong>.</p>
 <h2 id="high-level-flow"><a class="header" href="#high-level-flow">High-level flow</a></h2>
 <pre class="mermaid">---
-title: maxBTC Issuer Library
+title: Magma LPer
 ---
 graph LR
   IA((Input
       Account))
-  MB((maxBTC
-      Contract))
   OA((Output
-      Account))
+          Account))
   P[Processor]
-  MIL[maxBTC Issuer
-      Library]
-  P -- 1/Deposit --&gt; MIL
-  MIL -- 2/Query balance --&gt; IA
-  MIL -- 3/Do Deposit
-        funds --&gt; IA
-  IA -- 4/Deposit derivative --&gt; MB
-  MB -- 5/Send maxBTC --&gt; OA
+  S[Magma
+      Liquidity
+      Provider]
+  M[Magma Vault]
+  P -- 1/Provide Liquidity --&gt; S
+  S -- 2/Query balances --&gt; IA
+  S -- 3/Do Provide Liquidity --&gt; IA
+  IA -- 4/Provide Liquidity
+                  [Tokens] --&gt; M
+  M -- 4'/Mint Shares --&gt; OA
+
 </pre>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Function</th><th>Parameters</th><th>Description</th></tr></thead><tbody>
-<tr><td><strong>Issue</strong></td><td></td><td>Deposits the BTC derivative balance of the <strong>input account</strong> into the <strong>maxBTC contract</strong> and deposits the resulting maxBTC into the <strong>output account</strong>.</td></tr>
+<tr><td><strong>ProvideLiquidity</strong></td><td><code>amount_0_min: Option&lt;String&gt;</code> <br><code>amount_1_min: Option&lt;String&gt;</code></td><td>Provide double-sided liquidity to the pre-configured <strong>Magma Vault</strong> from the <strong>input account</strong>, and receive the <strong>shares</strong> into the <strong>output account</strong>.</td></tr>
 </tbody></table>
 </div>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
@@ -213,24 +214,38 @@ graph LR
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct LibraryConfig {
+    /// Address of the input account 
     pub input_addr: LibraryAccountType,
+    /// Address of the output account 
     pub output_addr: LibraryAccountType,
-    // Address of the maxBTC issuer contract
-    pub maxbtc_issuer_addr: String,
-    // Denom of the BTC derivative we are going to deposit
-    pub btc_denom: String,
+    /// Configuration for the liquidity provider
+    /// This includes the pool address and asset data
+    pub lp_config: LiquidityProviderConfig,
+}
+
+pub struct LiquidityProviderConfig {
+    /// Address of the vault we are going to deposit into
+    pub vault_addr: String,
+    /// Denoms of both assets we are going to provide liquidity for
+    pub asset_data: AssetData,
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h2>
+<h3 id="deposit-process"><a class="header" href="#deposit-process">Deposit Process</a></h3>
+<ol>
+<li><strong>Balance Check</strong>: Queries the input account balance for the specified pool assets.</li>
+<li><strong>Provide Liquidity</strong>: Executes a <code>Deposit</code> message, which deposits assets to the vault. Upon depositing, the provider obtains an amount of LP token shares.</li>
+</ol>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../libraries/cosmwasm/mars_lending.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../libraries/cosmwasm/maxbtc_issuer.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../libraries/cosmwasm/magma_lper.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../libraries/cosmwasm/magma_withdrawer.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -240,11 +255,11 @@ graph LR
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../libraries/cosmwasm/mars_lending.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../libraries/cosmwasm/maxbtc_issuer.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../libraries/cosmwasm/magma_lper.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../libraries/cosmwasm/magma_withdrawer.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
