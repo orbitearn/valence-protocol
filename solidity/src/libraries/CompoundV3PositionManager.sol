@@ -152,12 +152,14 @@ contract CompoundV3PositionManager is Library {
         storedConfig.inputAccount.execute(storedConfig.marketProxyAddress, 0, encodedWithdrawCall);
     }
 
-    function getOwedRewards() external returns (CometRewards.RewardOwed memory) {
+    function getRewardOwed() external returns (address token, uint256 amount) {
         CompoundV3PositionManagerConfig memory storedConfig = config;
 
         // Get the owed rewards from the market
-        return
-            CometRewards(storedConfig.rewards).getRewardOwed(storedConfig.marketProxyAddress, address(storedConfig.inputAccount));
+        CometRewards.RewardOwed memory rewardOwed = CometRewards(storedConfig.rewards).getRewardOwed(
+            storedConfig.marketProxyAddress, address(storedConfig.inputAccount)
+        );
+        return (rewardOwed.token, rewardOwed.owed);
     }
 
     /**

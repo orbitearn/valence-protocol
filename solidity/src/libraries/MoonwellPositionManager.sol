@@ -89,7 +89,8 @@ contract MoonwellPositionManager is Library {
         IMoonwellMToken mToken = IMoonwellMToken(storedConfig.mTokenAddress);
         address underlyingAsset = mToken.underlying();
 
-        uint256 amountToSupply = amount == 0 ? IERC20(underlyingAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
+        uint256 amountToSupply =
+            amount == 0 ? IERC20(underlyingAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
 
         // Approve the mToken contract to spend the underlying asset from the input account
         bytes memory encodedApproveCall = abi.encodeCall(IERC20.approve, (storedConfig.mTokenAddress, amountToSupply));
@@ -152,7 +153,8 @@ contract MoonwellPositionManager is Library {
         IMoonwellMToken mToken = IMoonwellMToken(storedConfig.mTokenAddress);
         address underlyingAsset = mToken.underlying();
 
-        uint256 amountToRepay = amount == 0 ? IERC20(underlyingAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
+        uint256 amountToRepay =
+            amount == 0 ? IERC20(underlyingAsset).balanceOf(address(storedConfig.inputAccount)) : amount;
 
         // Approve the mToken contract to spend the underlying asset from the input account
         bytes memory encodedApproveCall = abi.encodeCall(IERC20.approve, (storedConfig.mTokenAddress, amountToRepay));
@@ -188,7 +190,8 @@ contract MoonwellPositionManager is Library {
     function exitMarket() external onlyProcessor {
         MoonwellPositionManagerConfig memory storedConfig = config;
 
-        bytes memory encodedExitMarketCall = abi.encodeCall(IMoonwellComptroller.exitMarket, (storedConfig.mTokenAddress));
+        bytes memory encodedExitMarketCall =
+            abi.encodeCall(IMoonwellComptroller.exitMarket, (storedConfig.mTokenAddress));
 
         storedConfig.inputAccount.execute(storedConfig.comptrollerAddress, 0, encodedExitMarketCall);
     }
@@ -266,10 +269,21 @@ contract MoonwellPositionManager is Library {
     }
 
     // Public getters for config fields
-    function inputAccount() public view returns (BaseAccount) { return config.inputAccount; }
-    function outputAccount() public view returns (BaseAccount) { return config.outputAccount; }
-    function comptrollerAddress() public view returns (address) { return config.comptrollerAddress; }
-    function mTokenAddress() public view returns (address) { return config.mTokenAddress; }
+    function inputAccount() public view returns (BaseAccount) {
+        return config.inputAccount;
+    }
+
+    function outputAccount() public view returns (BaseAccount) {
+        return config.outputAccount;
+    }
+
+    function comptrollerAddress() public view returns (address) {
+        return config.comptrollerAddress;
+    }
+
+    function mTokenAddress() public view returns (address) {
+        return config.mTokenAddress;
+    }
 
     /**
      * @dev Internal initialization function called during construction
@@ -288,4 +302,4 @@ contract MoonwellPositionManager is Library {
         // Validate and update the configuration.
         config = validateConfig(_config);
     }
-} 
+}

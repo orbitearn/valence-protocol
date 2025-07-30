@@ -33,7 +33,8 @@ interface IMorphonLendingPool {
      * @param referralCode The referral code for tracking
      * @param onBehalfOf The address that will incur the debt
      */
-    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 
     /**
      * @notice Repay a borrowed asset
@@ -43,7 +44,9 @@ interface IMorphonLendingPool {
      * @param onBehalfOf The address that will have the debt repaid
      * @return The amount repaid
      */
-    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256);
 
     /**
      * @notice Get the balance of mTokens for a specific asset and user
@@ -60,4 +63,4 @@ interface IMorphonLendingPool {
      * @return The borrow balance
      */
     function borrowBalanceOf(address asset, address user) external view returns (uint256);
-} 
+}

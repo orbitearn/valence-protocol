@@ -91,7 +91,7 @@ contract EulerPositionManager is Library {
 
         // Supply the asset to Euler Finance
         bytes memory encodedSupplyCall = abi.encodeCall(
-            IEulerMarkets.supplyFrom, 
+            IEulerMarkets.supplyFrom,
             (storedConfig.subAccountId, asset, amountToSupply, address(storedConfig.inputAccount))
         );
 
@@ -114,7 +114,7 @@ contract EulerPositionManager is Library {
         uint256 amountToWithdraw = amount == 0 ? type(uint256).max : amount;
 
         bytes memory encodedWithdrawCall = abi.encodeCall(
-            IEulerMarkets.withdrawTo, 
+            IEulerMarkets.withdrawTo,
             (storedConfig.subAccountId, asset, amountToWithdraw, address(storedConfig.outputAccount))
         );
 
@@ -130,10 +130,8 @@ contract EulerPositionManager is Library {
     function borrow(address asset, uint256 amount) external onlyProcessor {
         EulerPositionManagerConfig memory storedConfig = config;
 
-        bytes memory encodedBorrowCall = abi.encodeCall(
-            IEulerMarkets.borrow, 
-            (storedConfig.subAccountId, asset, amount)
-        );
+        bytes memory encodedBorrowCall =
+            abi.encodeCall(IEulerMarkets.borrow, (storedConfig.subAccountId, asset, amount));
 
         storedConfig.inputAccount.execute(storedConfig.marketsAddress, 0, encodedBorrowCall);
     }
@@ -162,7 +160,7 @@ contract EulerPositionManager is Library {
 
         // Repay the borrowed asset to Euler Finance
         bytes memory encodedRepayCall = abi.encodeCall(
-            IEulerMarkets.repayFrom, 
+            IEulerMarkets.repayFrom,
             (storedConfig.subAccountId, asset, amountToRepay, address(storedConfig.inputAccount))
         );
 
@@ -177,9 +175,7 @@ contract EulerPositionManager is Library {
     function getSupplyBalance(address asset) external view returns (uint256) {
         EulerPositionManagerConfig memory storedConfig = config;
         return IEulerMarkets(storedConfig.marketsAddress).balanceOf(
-            address(storedConfig.inputAccount), 
-            storedConfig.subAccountId, 
-            asset
+            address(storedConfig.inputAccount), storedConfig.subAccountId, asset
         );
     }
 
@@ -191,9 +187,7 @@ contract EulerPositionManager is Library {
     function getBorrowBalance(address asset) external view returns (uint256) {
         EulerPositionManagerConfig memory storedConfig = config;
         return IEulerMarkets(storedConfig.marketsAddress).borrowBalance(
-            address(storedConfig.inputAccount), 
-            storedConfig.subAccountId, 
-            asset
+            address(storedConfig.inputAccount), storedConfig.subAccountId, asset
         );
     }
 
@@ -234,4 +228,4 @@ contract EulerPositionManager is Library {
         // Validate and update the configuration.
         config = validateConfig(_config);
     }
-} 
+}

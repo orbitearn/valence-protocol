@@ -50,8 +50,7 @@ contract EulerPositionManagerTest is Test {
         vm.startPrank(owner);
 
         // Create and encode config directly
-        EulerPositionManager.EulerPositionManagerConfig memory config = EulerPositionManager
-            .EulerPositionManagerConfig({
+        EulerPositionManager.EulerPositionManagerConfig memory config = EulerPositionManager.EulerPositionManagerConfig({
             inputAccount: BaseAccount(payable(address(inputAccount))),
             outputAccount: BaseAccount(payable(address(outputAccount))),
             marketsAddress: address(eulerMarkets),
@@ -336,9 +335,8 @@ contract EulerPositionManagerTest is Test {
         (address target, uint256 value, bytes memory data) = MockBaseAccount(inputAccount).executeParams(0);
         assertEq(target, address(eulerMarkets), "Target should be the markets address");
         assertEq(value, 0, "Value should be zero for borrow call");
-        bytes memory expectedData = abi.encodeWithSelector(
-            IEulerMarkets.borrow.selector, subAccountId, testAsset, exactAmount
-        );
+        bytes memory expectedData =
+            abi.encodeWithSelector(IEulerMarkets.borrow.selector, subAccountId, testAsset, exactAmount);
         assertEq(data, expectedData, "Data should be the encoded borrow call");
     }
 
@@ -483,4 +481,4 @@ contract EulerPositionManagerTest is Test {
         // then
         assertEq(actualRate, expectedRate, "Borrow rate should match expected value");
     }
-} 
+}

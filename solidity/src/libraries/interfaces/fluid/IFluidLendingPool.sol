@@ -33,7 +33,8 @@ interface IFluidLendingPool {
      * @param referralCode The referral code for tracking
      * @param onBehalfOf The address that will incur the debt
      */
-    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 
     /**
      * @notice Repay a borrowed asset
@@ -43,7 +44,9 @@ interface IFluidLendingPool {
      * @param onBehalfOf The address that will have the debt repaid
      * @return The amount repaid
      */
-    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external returns (uint256);
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256);
 
     /**
      * @notice Get the balance of fTokens for a specific asset and user
@@ -81,4 +84,4 @@ interface IFluidLendingPool {
      * @return The total debt amount
      */
     function getTotalDebt(address user) external view returns (uint256);
-} 
+}

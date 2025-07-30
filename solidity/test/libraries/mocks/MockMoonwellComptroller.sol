@@ -11,12 +11,12 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
     mapping(address => address[]) public accountMarkets;
     mapping(address => mapping(address => bool)) public accountMembership;
     mapping(address => bool) public listedMarkets;
-    
+
     uint256 public constant CLOSE_FACTOR_MANTISSA = 0.5e18; // 50%
     uint256 public constant LIQUIDATION_INCENTIVE_MANTISSA = 1.08e18; // 8% incentive
     address public constant ORACLE_ADDRESS = address(0x1234567890123456789012345678901234567890);
     address public constant PAUSE_GUARDIAN = address(0x0987654321098765432109876543210987654321);
-    
+
     mapping(address => bool) public mintPaused;
     mapping(address => bool) public borrowPaused;
 
@@ -29,7 +29,7 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
 
     function enterMarkets(address[] calldata mTokens) external returns (uint256[] memory) {
         uint256[] memory results = new uint256[](mTokens.length);
-        
+
         for (uint256 i = 0; i < mTokens.length; i++) {
             if (listedMarkets[mTokens[i]]) {
                 if (!accountMembership[msg.sender][mTokens[i]]) {
@@ -41,7 +41,7 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
                 results[i] = 1; // Market not listed
             }
         }
-        
+
         return results;
     }
 
@@ -49,7 +49,7 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
         if (accountMembership[msg.sender][mTokenAddress]) {
             // Remove from membership
             accountMembership[msg.sender][mTokenAddress] = false;
-            
+
             // Remove from account markets array
             address[] storage markets = accountMarkets[msg.sender];
             for (uint256 i = 0; i < markets.length; i++) {
@@ -59,7 +59,7 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
                     break;
                 }
             }
-            
+
             return 0; // Success
         }
         return 1; // Not a member
@@ -118,4 +118,4 @@ contract MockMoonwellComptroller is IMoonwellComptroller {
     function setBorrowPaused(address mToken, bool paused) external {
         borrowPaused[mToken] = paused;
     }
-} 
+}

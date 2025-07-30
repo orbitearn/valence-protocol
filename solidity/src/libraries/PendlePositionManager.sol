@@ -70,7 +70,11 @@ contract PendlePositionManager is Library {
         emit AllowedMaturityRemoved(maturity);
     }
 
-    function mintPT(address account, uint256 amount, uint256 maturity) external onlyProcessor onlyAllowedMaturity(maturity) {
+    function mintPT(address account, uint256 amount, uint256 maturity)
+        external
+        onlyProcessor
+        onlyAllowedMaturity(maturity)
+    {
         require(amount > 0, "Amount must be > 0");
         IERC20 underlying = IERC20(config.underlyingAsset);
         require(underlying.balanceOf(account) >= amount, "Insufficient underlying balance");
@@ -80,12 +84,17 @@ contract PendlePositionManager is Library {
         bytes memory approveCall = abi.encodeCall(IERC20.approve, (config.pendleMarket, amount));
         config.inputAccount.execute(config.underlyingAsset, 0, approveCall);
         // Mint PT from inputAccount
-        bytes memory mintCall = abi.encodeCall(IPendleMarket.mintPT, (config.underlyingAsset, amount, maturity, account));
+        bytes memory mintCall =
+            abi.encodeCall(IPendleMarket.mintPT, (config.underlyingAsset, amount, maturity, account));
         config.inputAccount.execute(config.pendleMarket, 0, mintCall);
         emit MintPT(account, amount, maturity);
     }
 
-    function redeemPT(address account, uint256 amount, uint256 maturity) external onlyProcessor onlyAllowedMaturity(maturity) {
+    function redeemPT(address account, uint256 amount, uint256 maturity)
+        external
+        onlyProcessor
+        onlyAllowedMaturity(maturity)
+    {
         require(amount > 0, "Amount must be > 0");
         IPendlePT pt = IPendlePT(config.ptToken);
         require(pt.balanceOf(account) >= amount, "Insufficient PT balance");
@@ -99,4 +108,4 @@ contract PendlePositionManager is Library {
         config.inputAccount.execute(config.pendleMarket, 0, redeemCall);
         emit RedeemPT(account, amount, maturity);
     }
-} 
+}

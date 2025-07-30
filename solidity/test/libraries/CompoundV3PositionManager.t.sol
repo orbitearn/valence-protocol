@@ -496,4 +496,6 @@ contract CompoundV3PositionManagerTest is Test {
         vm.prank(unauthorized);
         compoundV3PositionManager.supplyCollateral(address(baseToken), amount);
     }
+
+    // ============== Rewards Tests ==============
 }

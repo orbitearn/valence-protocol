@@ -19,12 +19,12 @@ contract MoonwellPositionManagerTest is Test {
     MockMoonwellComptroller public comptroller;
     MockMoonwellMToken public mToken;
     MockERC20 public underlyingToken;
-    
+
     // Test addresses
     address public owner;
     address public processor;
     address public user;
-    
+
     // Test parameters
     uint256 public constant INITIAL_BALANCE = 1000e18;
     uint256 public constant SUPPLY_AMOUNT = 100e18;
@@ -41,38 +41,39 @@ contract MoonwellPositionManagerTest is Test {
         underlyingToken = new MockERC20("Mock Token", "MOCK", 18);
         comptroller = new MockMoonwellComptroller();
         mToken = new MockMoonwellMToken(address(underlyingToken), address(comptroller));
-        
+
         // Deploy accounts
         vm.startPrank(owner);
         inputAccount = new BaseAccount(owner, new address[](0));
         outputAccount = new BaseAccount(owner, new address[](0));
         vm.stopPrank();
-        
+
         // Fund accounts
         underlyingToken.mint(address(inputAccount), INITIAL_BALANCE);
         underlyingToken.mint(address(outputAccount), INITIAL_BALANCE);
-        
+
         // Create configuration
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(config);
-        
+
         // Deploy position manager
         vm.startPrank(owner);
         moonwellPositionManager = new MoonwellPositionManager(owner, processor, encodedConfig);
         vm.stopPrank();
-        
+
         // Set up permissions
         vm.startPrank(owner);
         inputAccount.approveLibrary(address(moonwellPositionManager));
         outputAccount.approveLibrary(address(moonwellPositionManager));
         vm.stopPrank();
-        
+
         // Fund mToken with underlying for operations
         underlyingToken.mint(address(mToken), INITIAL_BALANCE * 10);
 
@@ -89,9 +90,9 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_GivenValidConfig_WhenContractIsDeployed_ThenConfigIsSet() public view {
         // given - contract is deployed with valid config in setUp()
-        
+
         // when - config is retrieved
-        
+
         // then - config should match the expected values
         assertEq(address(moonwellPositionManager.inputAccount()), address(inputAccount));
         assertEq(address(moonwellPositionManager.outputAccount()), address(outputAccount));
@@ -103,20 +104,21 @@ contract MoonwellPositionManagerTest is Test {
         // given
         BaseAccount newInputAccount = new BaseAccount(owner, new address[](0));
         BaseAccount newOutputAccount = new BaseAccount(owner, new address[](0));
-        
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: newInputAccount,
             outputAccount: newOutputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // when
         vm.prank(owner);
         moonwellPositionManager.updateConfig(encodedConfig);
-        
+
         // then
         assertEq(address(moonwellPositionManager.inputAccount()), address(newInputAccount));
         assertEq(address(moonwellPositionManager.outputAccount()), address(newOutputAccount));
@@ -124,18 +126,19 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenComptrollerAddressIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(0),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // expect
         vm.expectRevert("Comptroller address can't be zero address");
-        
+
         // when
         vm.prank(owner);
         moonwellPositionManager.updateConfig(encodedConfig);
@@ -143,18 +146,19 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenMTokenAddressIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(0)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // expect
         vm.expectRevert("mToken address can't be zero address");
-        
+
         // when
         vm.prank(owner);
         moonwellPositionManager.updateConfig(encodedConfig);
@@ -162,18 +166,19 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenInputAccountIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: BaseAccount(payable(address(0))),
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // expect
         vm.expectRevert("Input account can't be zero address");
-        
+
         // when
         vm.prank(owner);
         moonwellPositionManager.updateConfig(encodedConfig);
@@ -181,18 +186,19 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithInvalidConfig_WhenOutputAccountIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: BaseAccount(payable(address(0))),
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // expect
         vm.expectRevert("Output account can't be zero address");
-        
+
         // when
         vm.prank(owner);
         moonwellPositionManager.updateConfig(encodedConfig);
@@ -200,18 +206,19 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertUpdateConfig_WithUnauthorized_WhenCallerIsNotOwner() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory newConfig = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(newConfig);
-        
+
         // expect
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
-        
+
         // when
         vm.prank(user);
         moonwellPositionManager.updateConfig(encodedConfig);
@@ -221,72 +228,76 @@ contract MoonwellPositionManagerTest is Test {
 
     function test_RevertConstructor_WithInvalidConfig_WhenComptrollerAddressIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(0),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(config);
-        
+
         // expect
         vm.expectRevert("Comptroller address can't be zero address");
-        
+
         // when
         new MoonwellPositionManager(owner, processor, encodedConfig);
     }
 
     function test_RevertConstructor_WithInvalidConfig_WhenMTokenAddressIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(0)
         });
-        
+
         bytes memory encodedConfig = abi.encode(config);
-        
+
         // expect
         vm.expectRevert("mToken address can't be zero address");
-        
+
         // when
         new MoonwellPositionManager(owner, processor, encodedConfig);
     }
 
     function test_RevertConstructor_WithInvalidConfig_WhenInputAccountIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: BaseAccount(payable(address(0))),
             outputAccount: outputAccount,
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(config);
-        
+
         // expect
         vm.expectRevert("Input account can't be zero address");
-        
+
         // when
         new MoonwellPositionManager(owner, processor, encodedConfig);
     }
 
     function test_RevertConstructor_WithInvalidConfig_WhenOutputAccountIsZeroAddress() public {
         // given
-        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager.MoonwellPositionManagerConfig({
+        MoonwellPositionManager.MoonwellPositionManagerConfig memory config = MoonwellPositionManager
+            .MoonwellPositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: BaseAccount(payable(address(0))),
             comptrollerAddress: address(comptroller),
             mTokenAddress: address(mToken)
         });
-        
+
         bytes memory encodedConfig = abi.encode(config);
-        
+
         // expect
         vm.expectRevert("Output account can't be zero address");
-        
+
         // when
         new MoonwellPositionManager(owner, processor, encodedConfig);
     }
@@ -298,32 +309,36 @@ contract MoonwellPositionManagerTest is Test {
         uint256 supplyAmount = SUPPLY_AMOUNT;
         uint256 initialMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 initialUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.supply(supplyAmount);
-        
+
         // then
         uint256 finalMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 finalUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         assertGt(finalMTokenBalance, initialMTokenBalance, "Should have mTokens after supply");
-        assertEq(finalUnderlyingBalance, initialUnderlyingBalance - supplyAmount, "Input account should have reduced underlying balance");
+        assertEq(
+            finalUnderlyingBalance,
+            initialUnderlyingBalance - supplyAmount,
+            "Input account should have reduced underlying balance"
+        );
     }
 
     function test_GivenZeroAmount_WhenSupplyIsCalled_ThenAllUnderlyingIsSupplied() public {
         // given
         uint256 initialMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 initialUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.supply(0);
-        
+
         // then
         uint256 finalMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 finalUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         assertGt(finalMTokenBalance, initialMTokenBalance, "Should have mTokens after supply");
         assertEq(finalUnderlyingBalance, 0, "Input account should have no underlying balance left");
     }
@@ -331,10 +346,10 @@ contract MoonwellPositionManagerTest is Test {
     function test_RevertSupply_WithUnauthorized_WhenCallerIsNotProcessor() public {
         // given
         uint256 supplyAmount = SUPPLY_AMOUNT;
-        
+
         // expect
         vm.expectRevert();
-        
+
         // when
         vm.prank(user);
         moonwellPositionManager.supply(supplyAmount);
@@ -346,19 +361,19 @@ contract MoonwellPositionManagerTest is Test {
         // given
         vm.prank(processor);
         moonwellPositionManager.supply(SUPPLY_AMOUNT);
-        
+
         uint256 withdrawAmount = SUPPLY_AMOUNT / 2;
         uint256 initialMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 initialUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.withdraw(withdrawAmount);
-        
+
         // then
         uint256 finalMTokenBalance = moonwellPositionManager.getMTokenBalance();
         uint256 finalUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         assertLt(finalMTokenBalance, initialMTokenBalance, "mToken balance should decrease");
         assertGt(finalUnderlyingBalance, initialUnderlyingBalance, "Underlying balance should increase");
     }
@@ -367,13 +382,13 @@ contract MoonwellPositionManagerTest is Test {
         // given
         vm.prank(processor);
         moonwellPositionManager.supply(SUPPLY_AMOUNT);
-        
+
         uint256 mTokenBalance = moonwellPositionManager.getMTokenBalance();
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.withdraw(mTokenBalance);
-        
+
         // then
         uint256 finalMTokenBalance = moonwellPositionManager.getMTokenBalance();
         assertEq(finalMTokenBalance, 0, "Should have no mTokens after full withdrawal");
@@ -382,10 +397,10 @@ contract MoonwellPositionManagerTest is Test {
     function test_RevertWithdraw_WithUnauthorized_WhenCallerIsNotProcessor() public {
         // given
         uint256 withdrawAmount = SUPPLY_AMOUNT;
-        
+
         // expect
         vm.expectRevert();
-        
+
         // when
         vm.prank(user);
         moonwellPositionManager.withdraw(withdrawAmount);
@@ -397,29 +412,33 @@ contract MoonwellPositionManagerTest is Test {
         // given
         vm.prank(processor);
         moonwellPositionManager.enterMarket();
-        
+
         uint256 borrowAmount = BORROW_AMOUNT;
         uint256 initialUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.borrow(borrowAmount);
-        
+
         // then
         uint256 borrowBalance = moonwellPositionManager.getBorrowBalance();
         uint256 finalUnderlyingBalance = underlyingToken.balanceOf(address(inputAccount));
-        
+
         assertEq(borrowBalance, borrowAmount, "Should have correct borrow balance");
-        assertEq(finalUnderlyingBalance, initialUnderlyingBalance + borrowAmount, "Input account should have received borrowed tokens");
+        assertEq(
+            finalUnderlyingBalance,
+            initialUnderlyingBalance + borrowAmount,
+            "Input account should have received borrowed tokens"
+        );
     }
 
     function test_RevertBorrow_WithUnauthorized_WhenCallerIsNotProcessor() public {
         // given
         uint256 borrowAmount = BORROW_AMOUNT;
-        
+
         // expect
         vm.expectRevert();
-        
+
         // when
         vm.prank(user);
         moonwellPositionManager.borrow(borrowAmount);
@@ -431,17 +450,17 @@ contract MoonwellPositionManagerTest is Test {
         // given
         vm.prank(processor);
         moonwellPositionManager.enterMarket();
-        
+
         vm.prank(processor);
         moonwellPositionManager.borrow(BORROW_AMOUNT);
-        
+
         uint256 repayAmount = BORROW_AMOUNT / 2;
         uint256 initialBorrowBalance = moonwellPositionManager.getBorrowBalance();
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.repay(repayAmount);
-        
+
         // then
         uint256 finalBorrowBalance = moonwellPositionManager.getBorrowBalance();
         assertLt(finalBorrowBalance, initialBorrowBalance, "Borrow balance should decrease");
@@ -451,14 +470,14 @@ contract MoonwellPositionManagerTest is Test {
         // given
         vm.prank(processor);
         moonwellPositionManager.enterMarket();
-        
+
         vm.prank(processor);
         moonwellPositionManager.borrow(BORROW_AMOUNT);
-        
+
         // when
         vm.prank(processor);
         moonwellPositionManager.repay(0);
-        
+
         // then
         uint256 finalBorrowBalance = moonwellPositionManager.getBorrowBalance();
         assertEq(finalBorrowBalance, 0, "Should have no borrow balance after full repayment");
@@ -467,12 +486,12 @@ contract MoonwellPositionManagerTest is Test {
     function test_RevertRepay_WithUnauthorized_WhenCallerIsNotProcessor() public {
         // given
         uint256 repayAmount = BORROW_AMOUNT;
-        
+
         // expect
         vm.expectRevert();
-        
+
         // when
         vm.prank(user);
         moonwellPositionManager.repay(repayAmount);
     }
-} 
+}

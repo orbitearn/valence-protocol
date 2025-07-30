@@ -47,12 +47,12 @@ contract FluidPositionManager is Library {
      */
     function _initConfig(bytes memory _config) internal override {
         FluidPositionManagerConfig memory decodedConfig = abi.decode(_config, (FluidPositionManagerConfig));
-        
+
         require(decodedConfig.lendingPoolAddress != address(0), "Lending pool address can't be zero address");
         require(decodedConfig.assetAddress != address(0), "Asset address can't be zero address");
         require(address(decodedConfig.inputAccount) != address(0), "Input account can't be zero address");
         require(address(decodedConfig.outputAccount) != address(0), "Output account can't be zero address");
-        
+
         config = decodedConfig;
     }
 
@@ -62,12 +62,12 @@ contract FluidPositionManager is Library {
      */
     function updateConfig(bytes memory _config) public override onlyOwner {
         FluidPositionManagerConfig memory decodedConfig = abi.decode(_config, (FluidPositionManagerConfig));
-        
+
         require(decodedConfig.lendingPoolAddress != address(0), "Lending pool address can't be zero address");
         require(decodedConfig.assetAddress != address(0), "Asset address can't be zero address");
         require(address(decodedConfig.inputAccount) != address(0), "Input account can't be zero address");
         require(address(decodedConfig.outputAccount) != address(0), "Output account can't be zero address");
-        
+
         config = decodedConfig;
     }
 
@@ -78,24 +78,22 @@ contract FluidPositionManager is Library {
     function supply(uint256 amount) external onlyProcessor {
         IERC20 asset = IERC20(config.assetAddress);
         IFluidLendingPool lendingPool = IFluidLendingPool(config.lendingPoolAddress);
-        
+
         uint256 supplyAmount = amount;
         if (amount == 0) {
             supplyAmount = asset.balanceOf(address(config.inputAccount));
         }
-        
+
         require(supplyAmount > 0, "No assets to supply");
-        
+
         // Transfer assets from input account to this contract
         config.inputAccount.execute(
-            address(asset),
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), supplyAmount)
+            address(asset), 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), supplyAmount)
         );
-        
+
         // Approve lending pool to spend assets
         asset.approve(config.lendingPoolAddress, supplyAmount);
-        
+
         // Supply to Fluid Finance
         lendingPool.supply(config.assetAddress, supplyAmount, address(config.outputAccount), config.referralCode);
     }
@@ -106,14 +104,14 @@ contract FluidPositionManager is Library {
      */
     function withdraw(uint256 amount) external onlyProcessor {
         IFluidLendingPool lendingPool = IFluidLendingPool(config.lendingPoolAddress);
-        
+
         uint256 withdrawAmount = amount;
         if (amount == 0) {
             withdrawAmount = lendingPool.balanceOf(config.assetAddress, address(config.outputAccount));
         }
-        
+
         require(withdrawAmount > 0, "No fTokens to withdraw");
-        
+
         // Withdraw from Fluid Finance to input account
         lendingPool.withdraw(config.assetAddress, withdrawAmount, address(config.inputAccount));
     }
@@ -126,11 +124,13 @@ contract FluidPositionManager is Library {
     function borrow(uint256 amount, uint256 interestRateMode) external onlyProcessor {
         require(amount > 0, "Borrow amount must be greater than 0");
         require(interestRateMode == 1 || interestRateMode == 2, "Invalid interest rate mode");
-        
+
         IFluidLendingPool lendingPool = IFluidLendingPool(config.lendingPoolAddress);
-        
+
         // Borrow from Fluid Finance to input account
-        lendingPool.borrow(config.assetAddress, amount, interestRateMode, config.referralCode, address(config.inputAccount));
+        lendingPool.borrow(
+            config.assetAddress, amount, interestRateMode, config.referralCode, address(config.inputAccount)
+        );
     }
 
     /**
@@ -140,27 +140,25 @@ contract FluidPositionManager is Library {
      */
     function repay(uint256 amount, uint256 interestRateMode) external onlyProcessor {
         require(interestRateMode == 1 || interestRateMode == 2, "Invalid interest rate mode");
-        
+
         IFluidLendingPool lendingPool = IFluidLendingPool(config.lendingPoolAddress);
         IERC20 asset = IERC20(config.assetAddress);
-        
+
         uint256 repayAmount = amount;
         if (amount == 0) {
             repayAmount = lendingPool.borrowBalanceOf(config.assetAddress, address(config.inputAccount));
         }
-        
+
         require(repayAmount > 0, "No debt to repay");
-        
+
         // Transfer assets from input account to this contract
         config.inputAccount.execute(
-            address(asset),
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), repayAmount)
+            address(asset), 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), repayAmount)
         );
-        
+
         // Approve lending pool to spend assets
         asset.approve(config.lendingPoolAddress, repayAmount);
-        
+
         // Repay to Fluid Finance
         lendingPool.repay(config.assetAddress, repayAmount, interestRateMode, address(config.inputAccount));
     }
@@ -269,4 +267,4 @@ contract FluidPositionManager is Library {
     function referralCode() external view returns (uint16) {
         return config.referralCode;
     }
-} 
+}

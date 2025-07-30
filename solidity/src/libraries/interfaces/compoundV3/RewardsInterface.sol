@@ -15,7 +15,7 @@ interface CometRewards {
 
     struct RewardOwed {
         address token;
-        uint owed;
+        uint256 owed;
     }
 
     /// @notice The governor address which controls the contract
@@ -25,20 +25,22 @@ interface CometRewards {
     function rewardConfig(address) external view returns (RewardConfig memory);
 
     /// @notice Rewards claimed per Comet instance and user account
-    function rewardsClaimed(address, address) external view returns (uint);
+    function rewardsClaimed(address, address) external view returns (uint256);
 
-    /** Custom events **/
-
+    /**
+     * Custom events *
+     */
     event GovernorTransferred(address indexed oldGovernor, address indexed newGovernor);
     event RewardClaimed(address indexed src, address indexed recipient, address indexed token, uint256 amount);
 
-    /** Custom errors **/
-
+    /**
+     * Custom errors *
+     */
     error AlreadyConfigured(address);
-    error InvalidUInt64(uint);
+    error InvalidUInt64(uint256);
     error NotPermitted(address);
     error NotSupported(address);
-    error TransferOutFailed(address, uint);
+    error TransferOutFailed(address, uint256);
 
     /**
      * @notice Set the reward token for a Comet instance
@@ -53,7 +55,7 @@ interface CometRewards {
      * @param to Where to send the tokens
      * @param amount The number of tokens to withdraw
      */
-    function withdrawToken(address token, address to, uint amount) external;
+    function withdrawToken(address token, address to, uint256 amount) external;
 
     /**
      * @notice Transfers the governor rights to a new address
@@ -83,5 +85,4 @@ interface CometRewards {
      * @param to The address to receive the rewards
      */
     function claimTo(address comet, address src, address to, bool shouldAccrue) external;
-
 }

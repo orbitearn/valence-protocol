@@ -89,4 +89,4 @@ interface IMoonwellComptroller {
      * @return True if borrowing is paused
      */
     function borrowGuardianPaused(address mToken) external view returns (bool);
-} 
+}

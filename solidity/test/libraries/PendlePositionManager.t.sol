@@ -35,7 +35,8 @@ contract PendlePositionManagerTest is Test {
         market.setPTToken(defaultMaturity, address(ptToken));
         market.setPTToken(otherMaturity, address(ptToken));
         // Prepare config struct
-        PendlePositionManager.PendlePositionManagerConfig memory config = PendlePositionManager.PendlePositionManagerConfig({
+        PendlePositionManager.PendlePositionManagerConfig memory config = PendlePositionManager
+            .PendlePositionManagerConfig({
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             pendleMarket: address(market),
@@ -196,4 +197,4 @@ contract PendlePositionManagerTest is Test {
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user));
         manager.removeAllowedMaturity(defaultMaturity);
     }
-} 
+}

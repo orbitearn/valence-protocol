@@ -57,24 +57,22 @@ contract MorphonPositionManager is Library {
     function supply(uint256 amount) external onlyProcessor {
         IERC20 asset = IERC20(config.assetAddress);
         IMorphonLendingPool lendingPool = IMorphonLendingPool(config.lendingPoolAddress);
-        
+
         uint256 supplyAmount = amount;
         if (amount == 0) {
             supplyAmount = asset.balanceOf(address(config.inputAccount));
         }
-        
+
         require(supplyAmount > 0, "No assets to supply");
-        
+
         // Transfer assets from input account to this contract
         config.inputAccount.execute(
-            address(asset),
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), supplyAmount)
+            address(asset), 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), supplyAmount)
         );
-        
+
         // Approve lending pool to spend assets
         asset.approve(config.lendingPoolAddress, supplyAmount);
-        
+
         // Supply to Morphon Finance
         lendingPool.supply(config.assetAddress, supplyAmount, address(config.outputAccount), config.referralCode);
     }
@@ -85,14 +83,14 @@ contract MorphonPositionManager is Library {
      */
     function withdraw(uint256 amount) external onlyProcessor {
         IMorphonLendingPool lendingPool = IMorphonLendingPool(config.lendingPoolAddress);
-        
+
         uint256 withdrawAmount = amount;
         if (amount == 0) {
             withdrawAmount = lendingPool.balanceOf(config.assetAddress, address(config.outputAccount));
         }
-        
+
         require(withdrawAmount > 0, "No mTokens to withdraw");
-        
+
         // Withdraw from Morphon Finance to input account
         lendingPool.withdraw(config.assetAddress, withdrawAmount, address(config.inputAccount));
     }
@@ -105,11 +103,13 @@ contract MorphonPositionManager is Library {
     function borrow(uint256 amount, uint256 interestRateMode) external onlyProcessor {
         require(amount > 0, "Borrow amount must be greater than 0");
         require(interestRateMode == 1 || interestRateMode == 2, "Invalid interest rate mode");
-        
+
         IMorphonLendingPool lendingPool = IMorphonLendingPool(config.lendingPoolAddress);
-        
+
         // Borrow from Morphon Finance to input account
-        lendingPool.borrow(config.assetAddress, amount, interestRateMode, config.referralCode, address(config.inputAccount));
+        lendingPool.borrow(
+            config.assetAddress, amount, interestRateMode, config.referralCode, address(config.inputAccount)
+        );
     }
 
     /**
@@ -119,27 +119,25 @@ contract MorphonPositionManager is Library {
      */
     function repay(uint256 amount, uint256 interestRateMode) external onlyProcessor {
         require(interestRateMode == 1 || interestRateMode == 2, "Invalid interest rate mode");
-        
+
         IMorphonLendingPool lendingPool = IMorphonLendingPool(config.lendingPoolAddress);
         IERC20 asset = IERC20(config.assetAddress);
-        
+
         uint256 repayAmount = amount;
         if (amount == 0) {
             repayAmount = lendingPool.borrowBalanceOf(config.assetAddress, address(config.inputAccount));
         }
-        
+
         require(repayAmount > 0, "No debt to repay");
-        
+
         // Transfer assets from input account to this contract
         config.inputAccount.execute(
-            address(asset),
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(this), repayAmount)
+            address(asset), 0, abi.encodeWithSelector(IERC20.transfer.selector, address(this), repayAmount)
         );
-        
+
         // Approve lending pool to spend assets
         asset.approve(config.lendingPoolAddress, repayAmount);
-        
+
         // Repay to Morphon Finance
         lendingPool.repay(config.assetAddress, repayAmount, interestRateMode, address(config.inputAccount));
     }
@@ -151,4 +149,4 @@ contract MorphonPositionManager is Library {
     function updateConfig(bytes memory _config) public override {
         _initConfig(_config);
     }
-} 
+}

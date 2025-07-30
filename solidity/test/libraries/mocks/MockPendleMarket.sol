@@ -18,7 +18,11 @@ contract MockPendleMarket is IPendleMarket {
         ptTokens[maturity] = MockERC20(ptToken);
     }
 
-    function mintPT(address asset, uint256 amount, uint256 maturity, address to) external override returns (uint256 ptAmount) {
+    function mintPT(address asset, uint256 amount, uint256 maturity, address to)
+        external
+        override
+        returns (uint256 ptAmount)
+    {
         require(asset == address(underlying), "Invalid asset");
         require(address(ptTokens[maturity]) != address(0), "PT not set");
         // Simulate minting 1:1
@@ -28,7 +32,11 @@ contract MockPendleMarket is IPendleMarket {
         return amount;
     }
 
-    function redeemPT(address pt, uint256 amount, uint256 maturity, address to) external override returns (uint256 underlyingAmount) {
+    function redeemPT(address pt, uint256 amount, uint256 maturity, address to)
+        external
+        override
+        returns (uint256 underlyingAmount)
+    {
         require(address(ptTokens[maturity]) == pt, "Invalid PT");
         // Simulate redeeming 1:1
         ptTokens[maturity].transferFrom(msg.sender, address(this), amount);
@@ -40,4 +48,4 @@ contract MockPendleMarket is IPendleMarket {
         // }
         return amount;
     }
-} 
+}
