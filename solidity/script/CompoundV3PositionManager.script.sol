@@ -15,6 +15,8 @@ contract CompoundV3PositionManagerScript is Script {
     // USDC on Sepolia
     address constant USDC_SEPOLIA = 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238;
 
+    address constant REWARDS_ADDRESS = 0x8bF5b658bdF0388E8b482ED51B14aef58f90abfD;
+
     // For mainnet
     // address constant COMPOUND_V3_USDC_MARKET = 0xc3d688B66703497DAA19211EEdff47f25384cdc3;
     // address constant USDC_MAINNET = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -58,7 +60,8 @@ contract CompoundV3PositionManagerScript is Script {
             inputAccount: inputAccount,
             outputAccount: outputAccount,
             baseAsset: USDC_SEPOLIA,
-            marketProxyAddress: COMPOUND_V3_USDC_MARKET
+            marketProxyAddress: COMPOUND_V3_USDC_MARKET,
+            rewards: REWARDS_ADDRESS
         });
 
         bytes memory configBytes = abi.encode(config);

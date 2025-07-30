@@ -27,6 +27,7 @@ contract DeployArbitrumSepoliaScript is Script {
     // Arbitrum Sepolia Testnet Addresses (Please verify these addresses)
     address constant USDC_ARBITRUM_SEPOLIA = 0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d;
     address constant WETH_ARBITRUM_SEPOLIA = 0x980B62Da83eFf3D4576C647993b0c1D7faf17c73;
+    address constant REWARDS_SEPOLIA = 0x8bF5b658bdF0388E8b482ED51B14aef58f90abfD;
 
     // Note: These are placeholder addresses - please update with actual Arbitrum Sepolia addresses
     address constant COMPOUND_V3_USDC_MARKET_ARBITRUM_SEPOLIA = 0x0000000000000000000000000000000000000001;
@@ -142,7 +143,8 @@ contract DeployArbitrumSepoliaScript is Script {
             inputAccount: compoundInputAccount,
             outputAccount: compoundOutputAccount,
             baseAsset: USDC_ARBITRUM_SEPOLIA,
-            marketProxyAddress: COMPOUND_V3_USDC_MARKET_ARBITRUM_SEPOLIA
+            marketProxyAddress: COMPOUND_V3_USDC_MARKET_ARBITRUM_SEPOLIA,
+            rewards: REWARDS_SEPOLIA
         });
 
         bytes memory compoundConfigBytes = abi.encode(compoundConfig);

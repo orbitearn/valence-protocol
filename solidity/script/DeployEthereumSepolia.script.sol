@@ -41,6 +41,7 @@ contract DeployAllScript is Script {
     address COMPOUND_V3_USDC_MARKET = vm.envAddress("COMPOUND_V3_USDC_MARKET");
     address CCTP_TOKEN_MESSENGER = vm.envAddress("CCTP_TOKEN_MESSENGER");
     address AAVE_POOL = vm.envAddress("AAVE_POOL");
+    address constant REWARDS_SEPOLIA = 0x8bF5b658bdF0388E8b482ED51B14aef58f90abfD;
 
     // Native ETH
     address constant NATIVE_ETH = address(0);
@@ -225,7 +226,8 @@ contract DeployAllScript is Script {
             inputAccount: inputAccount1,
             outputAccount: outputAccount1,
             baseAsset: USDC,
-            marketProxyAddress: COMPOUND_V3_USDC_MARKET
+            marketProxyAddress: COMPOUND_V3_USDC_MARKET,
+            rewards: REWARDS_SEPOLIA
         });
 
         bytes memory compoundConfigBytes = abi.encode(compoundConfig);
